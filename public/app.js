@@ -207,7 +207,12 @@ function notesNodes() {
 function countdownList(max = 5) {
   const mine = upcomingCountdowns(S.countdowns, now());
   const taken = new Set(mine.map((c) => ymd(c.when)));
-  const holidays = upcomingCountdowns((S.calendar.holidays || []).filter((h) => !taken.has(h.date)), now());
+  // Lunar New Year isn't on every holiday calendar, so it comes from holidays.js too.
+  const cal = S.calendar.holidays || [];
+  const y = now().getFullYear();
+  const lunar = S.holidayDecor === false ? [] : [y, y + 1].map((yr) => LUNAR_NEW_YEAR[yr]).filter(Boolean)
+    .filter((date) => !cal.some((h) => h.date === date)).map((date) => ({ title: 'Lunar New Year', date }));
+  const holidays = upcomingCountdowns([...cal, ...lunar].filter((h) => !taken.has(h.date)), now());
   return [...mine, ...holidays].sort((a, b) => a.days - b.days).filter((c) => c.days <= S.countdownDays).slice(0, max);
 }
 function countdownCard(max = 3) {
@@ -436,9 +441,9 @@ function choreBoard() {
       const ordered = [...p.left, ...p.mine.filter((c) => !p.left.includes(c))];
       return el('div', { class: 'board-col', style: `--c:${p.color}` },
         el('div', { class: 'board-head' }, ring(p.color, p.done / p.total),
-          el('div', { class: 'ring-text' }, el('b', {}, p.name),
-            el('span', { class: 'muted' }, p.done === p.total ? 'All done!' : `${p.done} of ${p.total} done`,
-              p.everyone ? null : el('span', { class: 'stars' }, ` · ★ ${p.stars}`)))),
+          el('div', { class: 'ring-text' },
+            el('span', { class: 'board-name' }, el('b', {}, p.name), p.everyone ? null : el('span', { class: 'stars' }, `★ ${p.stars}`)),
+            el('span', { class: 'muted nowrap' }, p.done === p.total ? 'All done!' : `${p.done} of ${p.total} done`))),
         ordered.map((c) => {
           const done = S.doneToday.includes(c.id);
           return el('button', { class: `board-chore${done ? ' done' : ''}`, onclick: () => toggleChore(c) },
@@ -459,7 +464,7 @@ function homeDay(d) {
     return el('div', { class: 'home-day' },
       el('header', { class: 'h-head' },
         el('div', {}, el('div', { class: 'h-dayname' }, d.toLocaleDateString([], { weekday: 'long' })),
-          el('div', { class: 'h-sub' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }))),
+          el('div', { class: 'h-sub h-subrow' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }), holidayChip(d))),
         el('div', { class: 'h-right' }, headWeather(d, out), bigClock(d, 'clock-m'))),
       banner,
       el('div', { class: 'day-grid' }, choreBoard(),
@@ -470,7 +475,7 @@ function homeDay(d) {
   return el('div', { class: 'home-day' },
     el('header', { class: 'h-head' },
       el('div', {}, el('div', { class: 'h-dayname' }, d.toLocaleDateString([], { weekday: 'long' })),
-        el('div', { class: 'h-sub' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }))),
+        el('div', { class: 'h-sub h-subrow' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }), holidayChip(d))),
       el('div', { class: 'h-right' }, headWeather(d, out), bigClock(d, 'clock-m'))),
     banner,
     el('div', { class: 'day-grid' },
@@ -497,7 +502,7 @@ function homeMorning(d) {
   const c = wx && wx.cur;
   return el('div', { class: 'home-morning' },
     el('div', { class: 'col' },
-      el('div', { class: 'greet' }, el('span', { class: 'greet-hi' }, 'Good morning'), bigClock(d, 'clock-xl'), el('span', { class: 'h-sub' }, fmtLongDate(d))),
+      el('div', { class: 'greet' }, greetLine(d, 'Good morning'), bigClock(d, 'clock-xl'), el('span', { class: 'h-sub' }, fmtLongDate(d))),
       el('section', { class: 'card-w wx-card' },
         c ? el('div', { class: 'wx-now' }, icon(wxKind(c.weather_code), 'wx-big'),
           el('div', {}, el('div', { class: 'wx-temp-l' }, `${Math.round(c.temperature_2m)}°`),
@@ -526,7 +531,7 @@ function homeEvening(d) {
   const lowTonight = wx ? Math.round(wx.daily.temperature_2m_min[Math.min(1, wx.daily.time.length - 1)]) : null;
   return el('div', { class: 'home-evening' },
     el('header', { class: 'h-head' },
-      el('div', {}, el('span', { class: 'greet-hi' }, 'Good evening'),
+      el('div', {}, greetLine(d, 'Good evening'),
         el('div', { class: 'h-clockline' }, bigClock(d, 'clock-l'), el('span', { class: 'h-sub' }, fmtLongDate(d)))),
       wx ? el('div', { class: 'pill-wx' }, icon(wxKind(wx.cur.weather_code, isDusk(d))),
         el('div', {}, el('b', {}, `${Math.round(wx.cur.temperature_2m)}°`), lowTonight != null ? el('span', { class: 'muted' }, `low of ${lowTonight}° tonight`) : null)) : null),
@@ -568,7 +573,9 @@ function homeNight(d) {
   const evs = eventsOn(tmr).slice(0, 3);
   return el('div', { class: `home-night${S.photos.length ? '' : ' no-photo'}`, onclick: () => { wokeAt = Date.now(); renderHome(); } },
     el('div', { class: 'night-main' },
+      nyeLine(d, 'before'),
       bigClock(d, 'clock-night'),
+      nyeLine(d, 'after'),
       el('div', { class: 'night-date' }, fmtLongDate(d)),
       el('div', { class: 'night-tmr' },
         el('span', { class: 'night-label' }, d.getHours() < 12 ? 'TODAY' : 'TOMORROW'),
@@ -576,6 +583,37 @@ function homeNight(d) {
         evs.map((e) => el('div', { class: 'night-line' }, `${e.allDay ? 'All day' : fmtTime(e.start)} · ${e.title}`)))),
     S.photos.length ? el('div', { class: 'night-photo' }, el('img', { src: `/photos/${encodeURIComponent(nightPhoto)}`, alt: '' })) : null,
     el('div', { class: 'night-hint' }, `${TAP} or press any key to wake`));
+}
+
+// ---------- holiday trim (see holidays.js) ----------
+function holidayNow(d) { return S && S.holidayDecor !== false ? holidayOn(d) : null; }
+// "Happy Thanksgiving" next to the date on the day itself.
+function holidayChip(d) {
+  const h = holidayNow(d);
+  return h && h.greet ? el('span', { class: 'holiday-chip', lang: h.greetingLang, style: `--hc:${h.color}` }, h.greeting) : null;
+}
+// Mornings and evenings say the holiday greeting instead of "Good morning".
+function greetLine(d, normal) {
+  const h = holidayNow(d);
+  if (!h || !h.greet) return el('span', { class: 'greet-hi' }, normal);
+  return el('span', { class: 'greet-hi holiday-greet', style: `--hc:${h.color}` },
+    el('span', { lang: h.greetingLang }, h.greeting), h.sub ? el('span', { class: 'holiday-sub' }, h.sub) : null);
+}
+// New Year's Eve on the night screen: "18 minutes until 2027" above the clock, then "Happy New Year!" after midnight.
+function nyeLine(d, where) {
+  if (!S || S.holidayDecor === false || !newYearsEveNight(d)) return null;
+  if (d.getMonth() === 0) return where === 'before' ? el('div', { class: 'nye-line' }, 'Happy New Year!') : null;
+  if (where !== 'after') return null;
+  const left = Math.ceil((new Date(d.getFullYear() + 1, 0, 1) - d) / 60000);
+  const h = Math.floor(left / 60), m = left % 60;
+  const t = h ? `${h} hr ${m} min` : `${m} minute${m === 1 ? '' : 's'}`;
+  return el('div', { class: 'nye-line' }, `${t} until ${d.getFullYear() + 1}`);
+}
+// The garland goes on every Home screen except late night (where only New Year's Eve gets it).
+function homeGarland(d, mode) {
+  const h = holidayNow(d);
+  if (!h || (mode === 'night' && !(h.kind === 'newyear' && newYearsEveNight(d)))) return null;
+  return garlandEl(h.kind);
 }
 
 // ---------- Home ----------
@@ -600,7 +638,7 @@ function renderHome(force = true) {
   document.body.classList.toggle('night', currentView === 'home' && mode === 'night');
   const box = document.getElementById('view-home');
   const view = { morning: homeMorning, day: homeDay, evening: homeEvening, night: homeNight }[mode](d);
-  box.replaceChildren(view);
+  box.replaceChildren(...[homeGarland(d, mode), view].filter(Boolean));
   box.dataset.mode = mode;
   fitChores();
 }
@@ -953,6 +991,8 @@ function inScreenOffHours(d) {
   if (!S || !S.screenOffAt) return false;
   const t = { ...MODE_TIMES, ...(S.modes || {}) };
   const h = d.getHours() + d.getMinutes() / 60;
+  // Stay on for the New Year's countdown, until 12:30.
+  if (S.holidayDecor !== false && ((d.getMonth() === 11 && d.getDate() === 31) || (d.getMonth() === 0 && d.getDate() === 1 && h < 0.5))) return false;
   const off = hm(S.screenOffAt), on = hm(d.getDay() % 6 === 0 ? t.weekendMorning : t.morning);
   return off < on ? h >= off && h < on : h >= off || h < on;
 }

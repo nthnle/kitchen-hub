@@ -268,13 +268,29 @@ body.night .toast { opacity: 0.85; }
 .ring-text { display: flex; flex-direction: column; flex: 1; line-height: 1.2; }
 .ring-text b { font-size: 1.02em; }
 .ring-text .muted { font-size: 0.78em; }
+/* Holiday trim (holidays.js): a garland along the top of Home, and the day's greeting */
+.garland { position: fixed; top: 0; left: 0; right: 0; z-index: 3; pointer-events: none; }
+.garland svg { display: block; width: 100%; height: auto; max-height: calc(90 * var(--u)); }
+.garland-wire { stroke: rgba(43, 38, 34, 0.28); }
+body.dusk .garland { opacity: 0.85; }
+body.dusk .garland-wire { stroke: rgba(242, 233, 222, 0.35); }
+.h-subrow { display: flex; align-items: center; gap: 0.7em; flex-wrap: wrap; }
+.holiday-chip { display: inline-block; padding: 0.15em 0.75em; border-radius: 999px; font-family: Outfit, sans-serif; font-size: 0.82em; font-weight: 600;
+  color: var(--hc); background: color-mix(in srgb, var(--hc) 14%, var(--panel)); }
+.holiday-greet { color: var(--hc); display: flex; flex-direction: column; }
+.holiday-sub { font-size: 0.6em; font-weight: 500; color: var(--ink2); }
+body.dusk .holiday-chip, body.dusk .holiday-greet { color: color-mix(in srgb, var(--hc) 45%, #fff); }
+body.dusk .holiday-chip { background: color-mix(in srgb, var(--hc) 30%, var(--panel)); }
+.nye-line { font-family: Outfit, sans-serif; font-size: 2.2em; font-weight: 600; color: #D4A845; }
+
 /* Home on quiet days: the big chore board */
 .board { flex: 1; min-height: 0; overflow: hidden; }
 .board-link { border: 0; background: none; color: var(--ink2); font-size: 0.82em; padding: 0.2em 0.4em; border-radius: 0.4em; }
 .board-link:hover { background: var(--chip); }
 .board-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5em, 1fr)); align-content: start; gap: 0.9em; margin-top: 0.6em; overflow: auto; }
-.board-head .muted { white-space: nowrap; }
-.board-head .stars { font-size: 1em; }
+.board-head .nowrap { white-space: nowrap; }
+.board-name { display: flex; align-items: baseline; gap: 0.45em; white-space: nowrap; }
+.board-name .stars { font-size: 0.8em; }
 .board-col { display: flex; flex-direction: column; gap: 0.45em; min-height: 0; padding: 0.9em 0.8em; border-radius: 0.9em; background: var(--bg); box-shadow: inset 0 0.25em 0 var(--c); }
 .board-head { display: flex; align-items: center; gap: 0.6em; margin-bottom: 0.3em; }
 .board-head .ring { width: 2.2em; height: 2.2em; }
