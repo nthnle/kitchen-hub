@@ -272,6 +272,8 @@ body.night .toast { opacity: 0.85; }
 .garland svg { display: block; width: 100%; height: auto; max-height: calc(90 * var(--u)); }
 .garland-wire { stroke: rgba(43, 38, 34, 0.28); }
 body.dusk .garland { opacity: 0.85; }
+.garland.quiet { opacity: 0.8; }
+body.dusk .garland.quiet { opacity: 0.6; }
 body.dusk .garland-wire { stroke: rgba(242, 233, 222, 0.35); }
 .h-subrow { display: flex; align-items: center; gap: 0.7em; flex-wrap: wrap; }
 .holiday-chip { display: inline-block; padding: 0.15em 0.75em; border-radius: 999px; font-family: Outfit, sans-serif; font-size: 0.82em; font-weight: 600;

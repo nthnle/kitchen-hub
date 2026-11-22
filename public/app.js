@@ -610,10 +610,12 @@ function nyeLine(d, where) {
   return el('div', { class: 'nye-line' }, `${t} until ${d.getFullYear() + 1}`);
 }
 // The garland goes on every Home screen except late night (where only New Year's Eve gets it).
+// Between holidays, a thinner one for the season.
 function homeGarland(d, mode) {
   const h = holidayNow(d);
-  if (!h || (mode === 'night' && !(h.kind === 'newyear' && newYearsEveNight(d)))) return null;
-  return garlandEl(h.kind);
+  if (h) return mode === 'night' && !(h.kind === 'newyear' && newYearsEveNight(d)) ? null : garlandEl(h.kind);
+  if (mode === 'night' || !S || S.holidayDecor === false || S.seasonDecor === false) return null;
+  return garlandEl(seasonOn(d), true);
 }
 
 // ---------- Home ----------

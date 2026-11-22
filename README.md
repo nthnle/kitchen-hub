@@ -16,7 +16,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
-- **Dressed for the holidays.** A garland along the top of Home in the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, plus a greeting on the day. On New Year's Eve the night screen counts down to midnight.
+- **Dressed for the holidays.** A garland along the top of Home in the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, plus a greeting on the day. On New Year's Eve the night screen counts down to midnight. The rest of the year, a thinner garland follows the seasons: blossoms, suns and lemons, acorns, snowflakes.
 
 | Morning | Evening (after sunset) |
 | --- | --- |
@@ -82,7 +82,8 @@ Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`
 | `screenOffAt` | When the monitor turns off for the night once nobody's using it (default `"0:00"`, midnight; `false` keeps it on). Any key or touch wakes it, and it turns back on when morning starts. |
 | `showCountdownsWithinDays` | Show a countdown on the kitchen screen once it's this many days away (default 60). The phone page always lists them all. |
 | `holidayCountdowns` | Calendar events that get a countdown automatically, by exact title. Defaults to New Year's Day, Valentine's Day, Easter Sunday, Mother's Day, Memorial Day, Father's Day, Independence Day, Labor Day, Halloween, Thanksgiving Day and Christmas Day (as named in Google's US holidays calendar). Give your own list, or `false` for none. |
-| `holidayDecor` | Holiday garlands and greetings on Home, the New Year's Eve countdown (the monitor stays on until 12:30 that night) and the Lunar New Year countdown. `false` turns them all off. |
+| `holidayDecor` | Holiday garlands and greetings on Home, the New Year's Eve countdown (the monitor stays on until 12:30 that night) and the Lunar New Year countdown. `false` turns them all off, seasonal garlands included. |
+| `seasonDecor` | The thin seasonal garland between holidays. `false` keeps only the holiday ones. |
 | `modes` | When each Home screen starts: `{"morning": "6:00", "weekendMorning": "8:00", "day": "10:00", "evening": "17:00", "night": "22:00"}` (the defaults). |
 | `services` | The buttons on the Watch tab. Add, remove or reorder freely. |
 | `port` | The web server's port (default 8080). |
@@ -178,7 +179,7 @@ npm start                            # http://localhost:8080 and /phone
 | `public/index.html`, `public/app.js` | The kitchen screen: time-of-day Home screens, tabs, slideshow, keyboard handling. |
 | `public/phone.html`, `public/phone.js` | The phone editor. |
 | `public/shared.js` | Helpers used by both pages (DOM builder, countdowns, alert banners). |
-| `public/holidays.js` | Holiday dates (including Easter, Thanksgiving and Lunar New Year) and the garland drawings. |
+| `public/holidays.js` | Holiday dates (including Easter, Thanksgiving and Lunar New Year), seasons, and the garland drawings. |
 | `public/style.css` | All styles; colors are CSS variables, swapped for the dusk theme. |
 | `scripts/setup.ps1` | One-time Windows setup (run as administrator). |
 | `scripts/start-kiosk.ps1` | Runs at sign-in: keeps the server running and opens Edge full screen. |
