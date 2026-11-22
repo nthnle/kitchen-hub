@@ -285,6 +285,13 @@ function fitChores() {
     more.hidden = false;
     more.textContent = `+${g.querySelectorAll('.mini-chore[hidden]').length} more`;
   }
+  // Still too tall: drop "+N more" where nothing is listed (the "1 of 3 done" line already says it).
+  for (const g of groups) {
+    if (!overflowing()) break;
+    if (!g.querySelector('.mini-chore:not([hidden])')) g.querySelector('.mini-more').hidden = true;
+  }
+  // Last resort: leave out the cards below the chores rather than show them cut in half.
+  for (let next = col.lastElementChild; next && next !== card && overflowing(); next = next.previousElementSibling) next.style.display = 'none';
 }
 
 // ---------- leave-by countdown ----------

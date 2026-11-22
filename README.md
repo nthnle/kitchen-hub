@@ -21,9 +21,9 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 
 | Morning | Evening (after sunset) |
 | --- | --- |
-| ![Morning: big clock, weather tips and an "Out the door in 28 min" countdown](docs/screenshots/morning.png) | ![Evening: chores before bed, tomorrow's plan and the grocery list in warm dark colors](docs/screenshots/evening.png) |
+| ![Morning: big clock, weather tips, an "Out the door in 28 min" countdown and the chores left, including one carried over from Saturday](docs/screenshots/morning.png) | ![Evening: chores before bed, tomorrow's plan and the grocery list in warm dark colors](docs/screenshots/evening.png) |
 | **Late night** | **Phone page** |
-| ![Late night: a dim clock with tomorrow's first plans and a dimmed photo](docs/screenshots/night.png) | <img src="docs/screenshots/phone.png" alt="The phone page: notes, leave-by times and groceries" width="260"> |
+| ![Late night: a dim clock with tomorrow's first plans and a dimmed photo](docs/screenshots/night.png) | <img src="docs/screenshots/phone.png" alt="The phone page: notes, the calendar button and leave-by times" width="260"> |
 
 ## What you need
 
