@@ -210,8 +210,13 @@ function prune() {
   const today = localDate();
   const notes = state.notes.filter((n) => new Date(n.expires).getTime() > now);
   const countdowns = state.countdowns.filter((c) => c.yearly || c.date >= today);
-  // One-time chores stay (hidden) until the week is over, so their stars still count.
-  const chores = state.chores.filter((c) => !c.date || c.date >= weekStart());
+  // One-time chores roll over until they're done; done ones stay (hidden) until the week is over, so their stars still count.
+  const since = weekStart();
+  const chores = state.chores.filter((c) => {
+    if (!c.date || c.date >= since) return true;
+    const done = doneOn(c);
+    return !done || done >= since;
+  });
   if (notes.length !== state.notes.length || countdowns.length !== state.countdowns.length || chores.length !== state.chores.length) {
     state.notes = notes;
     state.countdowns = countdowns;
@@ -254,7 +259,8 @@ app.get('/api/state', (req, res) => {
     slideSeconds: config.slideSeconds ?? 8,
     screenOffAt: config.screenOffAt === undefined ? '0:00' : config.screenOffAt, // false = never
     calendar: calendarCache,
-    chores: state.chores,
+    chores: state.chores.map((c) => (c.date ? { ...c, doneOn: doneOn(c) } : c)),
+    trash: trashChores(),
     doneToday: state.done[today] || [],
     stars: starCounts(),
     grocery: state.grocery,
@@ -331,6 +337,42 @@ app.post('/api/chores/:id/toggle', (req, res) => {
   res.json({ ok: true });
 });
 
+// The first day a one-time chore was checked off, on or after its date (so moving it to a new date starts it fresh).
+function doneOn(c) {
+  return Object.keys(state.done).sort().find((d) => d >= c.date && state.done[d].includes(c.id));
+}
+
+// Trash pickup: "trash": [{ "name": "Trash", "days": ["Mon", "Thu"], "person": "Dad" }, …] in config.json.
+// Each pickup becomes a "Put out the trash" chore the evening before, still showing on pickup morning if nobody did it.
+const DAY_WORDS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const trashList = () => (Array.isArray(config.trash) ? config.trash : []).map((t) => ({
+  name: String(t.name || 'Trash'),
+  person: String(t.person || ''),
+  days: (Array.isArray(t.days) ? t.days : []).map((d) => (typeof d === 'number' ? d : DAY_WORDS.indexOf(String(d).slice(0, 3).toLowerCase()))).filter((d) => d >= 0 && d <= 6),
+}));
+function trashChores() {
+  const out = [];
+  const list = trashList();
+  // A few days either side, so ?at= previews work too.
+  for (let n = -2; n <= 8; n++) {
+    const pickup = new Date();
+    pickup.setDate(pickup.getDate() + n);
+    const eve = new Date(pickup);
+    eve.setDate(pickup.getDate() - 1);
+    list.forEach((t, i) => {
+      if (!t.days.includes(pickup.getDay())) return;
+      const cid = `trash-${localDate(pickup)}-${i}`;
+      const done = [localDate(eve), localDate(pickup)].find((d) => (state.done[d] || []).includes(cid));
+      out.push({ id: cid, title: `Put out the ${t.name.toLowerCase()}`, person: t.person, days: [], date: localDate(eve), pickup: localDate(pickup), doneOn: done });
+    });
+  }
+  return out;
+}
+function trashPerson(cid) {
+  const m = /^trash-\d{4}-\d{2}-\d{2}-(\d+)$/.exec(cid);
+  return m ? (trashList()[Number(m[1])] || {}).person : undefined;
+}
+
 // Stars this week (since Sunday), per person.
 function weekStart() {
   const start = new Date();
@@ -344,7 +386,7 @@ function starCounts() {
   for (const [day, ids] of Object.entries(state.done)) {
     if (day < since) continue;
     for (const cid of ids) {
-      const p = byId[cid];
+      const p = byId[cid] ?? trashPerson(cid);
       if (p) counts[p] = (counts[p] || 0) + 1;
     }
   }

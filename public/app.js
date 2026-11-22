@@ -224,8 +224,15 @@ function countdownCard(max = 3) {
       el('div', {}, el('div', { class: 'cd-title' }, c.title), el('div', { class: 'muted small' }, fmtShortDate(c.when))),
       el('div', { class: 'cd-days' }, daysLabel(c.days)))));
 }
+// Your chores plus the trash nights from config.json.
+const allChores = () => [...S.chores, ...(S.trash || [])];
+// "from Sat" on a chore carried over from an earlier day.
+function lateTag(c) {
+  const t = lateLabel(c, now());
+  return t ? el('span', { class: 'late-tag' }, t) : null;
+}
 function choreStats() {
-  const todays = choresForToday(S.chores, now());
+  const todays = choresForToday(allChores(), now());
   const names = S.people.map((p) => p.name);
   // Chores for "Everyone" (or someone no longer in the family list) get their own row at the end.
   const groups = [...S.people.map((p) => ({ ...p, mine: todays.filter((c) => c.person === p.name) })),
@@ -256,7 +263,7 @@ function choresCard() {
         el('span', { class: 'ring-text' }, el('b', {}, p.name), el('span', { class: 'muted' }, p.done === p.total ? 'All done' : `${p.done} of ${p.total} done`)),
         p.everyone ? null : el('span', { class: 'stars' }, `★ ${p.stars}`)),
       p.left.map((c) => el('button', { class: 'mini-chore', onclick: () => toggleChore(c) },
-        el('span', { class: 'mini-check' }), el('span', {}, c.title))),
+        el('span', { class: 'mini-check' }), el('span', {}, c.title, lateTag(c)))),
       el('button', { class: 'mini-more', hidden: true, onclick: () => showView('chores') }))));
 }
 // Hide chores (from whoever has the most showing) until the Home column fits, adding "+N more".
@@ -447,7 +454,7 @@ function choreBoard() {
         ordered.map((c) => {
           const done = S.doneToday.includes(c.id);
           return el('button', { class: `board-chore${done ? ' done' : ''}`, onclick: () => toggleChore(c) },
-            el('span', { class: 'board-check' }, done ? icon('check') : null), el('span', {}, c.title));
+            el('span', { class: 'board-check' }, done ? icon('check') : null), el('span', {}, c.title, lateTag(c)));
         }));
     })));
 }
@@ -523,8 +530,8 @@ function homeMorning(d) {
 // ---------- Home: evening ----------
 function homeEvening(d) {
   const tmr = addDays(d, 1);
-  const todays = choresForToday(S.chores, d).filter((ch) => !S.doneToday.includes(ch.id));
-  const byId = Object.fromEntries(S.chores.map((ch) => [ch.id, ch.person]));
+  const todays = choresForToday(allChores(), d).filter((ch) => !S.doneToday.includes(ch.id));
+  const byId = Object.fromEntries(allChores().map((ch) => [ch.id, ch.person]));
   const starsToday = {};
   S.doneToday.forEach((cid) => { const p = byId[cid]; if (p) starsToday[p] = (starsToday[p] || 0) + 1; });
   const f1 = forecast && forecast[ymd(tmr)];
@@ -539,7 +546,7 @@ function homeEvening(d) {
       el('section', { class: 'card-w' }, el('h2', {}, 'Before bed'),
         todays.length ? todays.map((ch) => el('button', { class: 'bed-row', onclick: () => toggleChore(ch) },
           el('span', { class: 'avatar sm', style: `--c:${personColor(S.people, ch.person)}` }, (ch.person || '★')[0]),
-          el('span', { class: 'bed-text' }, el('b', {}, ch.title), el('span', { class: 'muted' }, ch.person || 'Everyone')),
+          el('span', { class: 'bed-text' }, el('b', {}, ch.title, lateTag(ch)), el('span', { class: 'muted' }, ch.person || 'Everyone')),
           el('span', { class: 'bed-check' })))
           : el('p', { class: 'all-done' }, 'All of today’s chores are done'),
         Object.keys(starsToday).length ? el('div', { class: 'stars-today' }, el('span', { class: 'muted' }, 'Stars earned today'),
@@ -713,7 +720,7 @@ const severeAlertActive = () => activeAlerts(S && S.alerts).some(isSevere);
 function renderChores() {
   fillChorePeople();
   const box = document.getElementById('chores');
-  const todays = choresForToday(S.chores, now());
+  const todays = choresForToday(allChores(), now());
   const names = [...S.people.map((p) => p.name)];
   if (todays.some((c) => !c.person || !names.includes(c.person))) names.push('');
   box.replaceChildren(...names.map((name) => {
@@ -727,7 +734,7 @@ function renderChores() {
       mine.length ? mine.map((c) => {
         const done = S.doneToday.includes(c.id);
         return el('button', { class: `chore${done ? ' done' : ''}`, onclick: () => toggleChore(c) },
-          el('span', { class: 'check' }, done ? icon('check') : null), el('span', {}, c.title));
+          el('span', { class: 'check' }, done ? icon('check') : null), el('span', {}, c.title, lateTag(c)));
       }) : el('p', { class: 'empty' }, 'No chores today'));
   }));
   if (!S.chores.length) box.replaceChildren(el('p', { class: 'empty big' }, 'No chores yet. Add some from your phone.'));

@@ -15,6 +15,10 @@
   "slideSeconds": 8,
   "screenOffAt": "0:00",
   "showCountdownsWithinDays": 30,
+  "trash": [
+    { "name": "Trash", "days": ["Mon", "Thu"] },
+    { "name": "Recycling", "days": ["Wed"] }
+  ],
   "modes": { "morning": "6:00", "weekendMorning": "8:00", "day": "10:00", "evening": "17:00", "night": "22:00" },
   "services": [
     { "name": "Netflix", "url": "https://www.netflix.com/browse", "color": "#e50914" },

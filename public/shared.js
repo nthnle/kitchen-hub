@@ -104,11 +104,30 @@ function alertBanners(alerts) {
   });
 }
 
-// Chores with no days set happen every day; one with a date happens only that day.
+// Chores with no days set happen every day; one with a date happens that day, and rolls over
+// to each next day until someone checks it off. Trash goes out the evening before pickup, and
+// still shows on pickup morning (until noon) if nobody did it.
+// Late ones come first, then tonight's trash.
 function choresForToday(chores, date = new Date()) {
   const dow = date.getDay();
   const day = ymd(date);
-  return chores.filter((c) => (c.date ? c.date === day : !c.days || !c.days.length || c.days.includes(dow)));
+  const shown = chores.filter((c) => {
+    if (c.pickup) return c.date === day || (c.pickup === day && date.getHours() < 12 && (!c.doneOn || c.doneOn === day));
+    if (c.date) return c.date === day || (c.date < day && (!c.doneOn || c.doneOn === day));
+    return !c.days || !c.days.length || c.days.includes(dow);
+  });
+  const rank = (c) => (c.date && c.date < day ? 0 : c.pickup ? 1 : 2);
+  return shown.map((c, i) => [rank(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map((x) => x[2]);
+}
+// "from yesterday", "from Sat", "from Nov 14" for a chore carried over; "pickup today" for missed trash.
+function lateLabel(c, today = new Date()) {
+  const day = ymd(today);
+  if (!c.date || c.date >= day) return '';
+  if (c.pickup) return 'pickup today';
+  const d = new Date(`${c.date}T12:00`);
+  const n = Math.round((new Date(`${day}T12:00`) - d) / 864e5);
+  return n === 1 ? 'from yesterday' : n < 7 ? `from ${DAY_NAMES[d.getDay()]}`
+    : `from ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
 }
 
 // How often a chore happens, in words: "Daily", "Mon Wed", "Tomorrow only", "Sat, Nov 28 only".
@@ -116,7 +135,7 @@ function choreWhen(c, today = new Date()) {
   if (c.date) {
     const d = new Date(`${c.date}T12:00`);
     const n = Math.round((d - new Date(`${ymd(today)}T12:00`)) / 864e5);
-    return n === 0 ? 'Today only' : n === 1 ? 'Tomorrow only' : n < 0 ? 'Done (one time)'
+    return n === 0 ? 'Today only' : n === 1 ? 'Tomorrow only' : n < 0 ? (c.doneOn ? 'Done (one time)' : `Not done yet, ${lateLabel(c, today)}`)
       : `${d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} only`;
   }
   return c.days && c.days.length ? c.days.map((d) => DAY_NAMES[d]).join(' ') : 'Daily';
@@ -153,6 +172,8 @@ function whenPicker({ select, days, date, hint, today = () => new Date() }) {
       checks().forEach((i) => { i.checked = !c.date && (c.days || []).includes(Number(i.value)); });
       select.value = !c.date ? 'repeat' : c.date === dayStr(0) ? 'today' : c.date === dayStr(1) ? 'tomorrow' : 'date';
       date.value = select.value === 'date' ? c.date : '';
+      // A late chore keeps its old date unless you change it.
+      date.min = c.date && c.date < dayStr(0) ? c.date : dayStr(0);
       sync();
     },
     reset() { picker.set({}); },

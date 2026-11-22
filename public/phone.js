@@ -64,9 +64,9 @@ function render() {
 
   // Today's chores
   const t = document.getElementById('chores-today');
-  const todays = choresForToday(S.chores);
+  const todays = choresForToday([...S.chores, ...(S.trash || [])]);
   t.replaceChildren(...todays.map((c) => checkItem(c.title, S.doneToday.includes(c.id),
-    () => act(() => api.send('POST', `/api/chores/${c.id}/toggle`)), c.person || 'Everyone')));
+    () => act(() => api.send('POST', `/api/chores/${c.id}/toggle`)), [c.person || 'Everyone', lateLabel(c)].filter(Boolean).join(' · '))));
   if (!todays.length) t.replaceChildren(el('p', { class: 'empty' }, 'Nothing today.'));
 
   // People dropdown (keep the current choice)
@@ -76,8 +76,8 @@ function render() {
   sel.value = keep;
 
   // All chores
-  // (One-time chores from earlier this week stay on the server for the star counts, but aren't listed.)
-  document.getElementById('chore-list').replaceChildren(...S.chores.filter((c) => !c.date || c.date >= ymd(new Date())).map((c) => editRow(
+  // (Finished one-time chores stay on the server until the week is over, for the star counts, but aren't listed.)
+  document.getElementById('chore-list').replaceChildren(...S.chores.filter((c) => !c.date || c.date >= ymd(new Date()) || !c.doneOn).map((c) => editRow(
     () => startEdit('chore', c.id, () => {
       document.getElementById('chore-title').value = c.title;
       document.getElementById('chore-person').value = c.person || '';

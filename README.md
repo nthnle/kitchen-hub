@@ -8,7 +8,8 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 
 - **Changes with the time of day.** Mornings show a big clock, weather tips ("Cool start — bring a jacket") and a countdown to when you need to leave. Daytime shows today as a timeline. Evenings show chores left before bed, tomorrow's plan and the grocery list. Late at night it dims to a quiet clock, and after midnight it turns the monitor off.
 - **Calendar.** Reads your Google or iCloud calendars (and US holidays). Click an event for its time, place and notes. Events titled `Sam: Soccer` show in Sam's color.
-- **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars.
+- **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars. A one-time chore nobody finished carries over to the next day, marked "from Sat", until someone checks it off.
+- **Trash night.** Set your pickup days and "Put out the trash" shows up as a chore the evening before.
 - **Groceries.** A shared list with one-click "Add again" buttons for things you buy often.
 - **Notes.** Post a note from your phone ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
@@ -81,6 +82,7 @@ Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`
 | `slideSeconds` | How long each slideshow photo stays up (default 8; collages get 3 more). |
 | `screenOffAt` | When the monitor turns off for the night once nobody's using it (default `"0:00"`, midnight; `false` keeps it on). Any key or touch wakes it, and it turns back on when morning starts. |
 | `showCountdownsWithinDays` | Show a countdown on the kitchen screen once it's this many days away (default 60). The phone page always lists them all. |
+| `trash` | Pickup days, e.g. `[{"name": "Trash", "days": ["Mon", "Thu"]}, {"name": "Recycling", "days": ["Wed"]}]`. The evening before each pickup, "Put out the trash" (or recycling) joins the chores for everyone, or for one person if you add `"person": "Dad"` (they get the star). If nobody does it, it's still there on pickup morning until noon. |
 | `holidayCountdowns` | Calendar events that get a countdown automatically, by exact title. Defaults to New Year's Day, Valentine's Day, Easter Sunday, Mother's Day, Memorial Day, Father's Day, Independence Day, Labor Day, Halloween, Thanksgiving Day and Christmas Day (as named in Google's US holidays calendar). Give your own list, or `false` for none. |
 | `holidayDecor` | Holiday garlands and greetings on Home, the New Year's Eve countdown (the monitor stays on until 12:30 that night) and the Lunar New Year countdown. `false` turns them all off, seasonal garlands included. |
 | `seasonDecor` | The thin seasonal garland between holidays. `false` keeps only the holiday ones. |
@@ -111,10 +113,10 @@ Treat private calendar links like passwords: anyone who has one can read that ca
 | --- | --- |
 | **Morning** (6–10 AM; 8–10 on weekends) | Big clock, weather tips, the leave-by countdown, today's plan, notes and chores. |
 | **Day** (10 AM–5 PM) | Today as a timeline with a "now" line, the chores still left, notes, countdowns and the week ahead. The slideshow starts here when the screen is left alone. |
-
-On quiet days (two or fewer events left on the calendar), mornings and daytime put a chore board in the big space instead: a column per person with every chore for today, checked off with a click. Today's few events move to a short list on the side.
 | **Evening** (5–10 PM) | Chores left before bed, tomorrow's plan and weather, and the grocery list. |
 | **Late night** (10 PM until morning) | A dim clock with tomorrow's first plans. After `screenOffAt` the monitor turns off. |
+
+On quiet days (two or fewer events left on the calendar), mornings and daytime put a chore board in the big space instead: a column per person with every chore for today, checked off with a click. Today's few events move to a short list on the side.
 
 From sunset to sunrise every tab uses warm, dark colors. When the screen is left alone it returns to Home. To preview another time, add `?at=2026-11-23T07:12` to the kitchen screen's address.
 
@@ -135,7 +137,7 @@ The pointer hides itself when the touchpad isn't in use.
 
 - **Notes** for the kitchen, from someone, kept for 1 day, 3 days or a week.
 - **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before.
-- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
+- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
 - Tap any note, chore, countdown or leave-by time to change it.
 
 ### On the kitchen screen
