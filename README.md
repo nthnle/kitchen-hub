@@ -11,7 +11,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars.
 - **Groceries.** A shared list with one-click "Add again" buttons for things you buy often.
 - **Notes.** Post a note from your phone ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
-- **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year.
+- **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunset — and National Weather Service alerts (US) as a banner that stays on screen.
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
@@ -80,6 +80,7 @@ Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`
 | `slideSeconds` | How long each slideshow photo stays up (default 8; collages get 3 more). |
 | `screenOffAt` | When the monitor turns off for the night once nobody's using it (default `"0:00"`, midnight; `false` keeps it on). Any key or touch wakes it, and it turns back on when morning starts. |
 | `showCountdownsWithinDays` | Show a countdown on the kitchen screen once it's this many days away (default 60). The phone page always lists them all. |
+| `holidayCountdowns` | Calendar events that get a countdown automatically, by exact title. Defaults to New Year's Day, Valentine's Day, Easter Sunday, Mother's Day, Memorial Day, Father's Day, Independence Day, Labor Day, Halloween, Thanksgiving Day and Christmas Day (as named in Google's US holidays calendar). Give your own list, or `false` for none. |
 | `modes` | When each Home screen starts: `{"morning": "6:00", "weekendMorning": "8:00", "day": "10:00", "evening": "17:00", "night": "22:00"}` (the defaults). |
 | `services` | The buttons on the Watch tab. Add, remove or reorder freely. |
 | `port` | The web server's port (default 8080). |
@@ -106,7 +107,9 @@ Treat private calendar links like passwords: anyone who has one can read that ca
 | Time | Home shows |
 | --- | --- |
 | **Morning** (6–10 AM; 8–10 on weekends) | Big clock, weather tips, the leave-by countdown, today's plan, notes and chores. |
-| **Day** (10 AM–5 PM) | Today as a timeline with a "now" line, chore progress, notes, countdowns and the week ahead. The slideshow starts here when the screen is left alone. |
+| **Day** (10 AM–5 PM) | Today as a timeline with a "now" line, the chores still left, notes, countdowns and the week ahead. The slideshow starts here when the screen is left alone. |
+
+On quiet days (two or fewer events left on the calendar), mornings and daytime put a chore board in the big space instead: a column per person with every chore for today, checked off with a click. Today's few events move to a short list on the side.
 | **Evening** (5–10 PM) | Chores left before bed, tomorrow's plan and weather, and the grocery list. |
 | **Late night** (10 PM until morning) | A dim clock with tomorrow's first plans. After `screenOffAt` the monitor turns off. |
 

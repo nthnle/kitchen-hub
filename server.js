@@ -70,7 +70,15 @@ function cleanDescription(s) {
     .replace(/\n{3,}/g, '\n\n').trim().slice(0, 600);
 }
 
-let calendarCache = { events: [], fetchedAt: null, errors: [] };
+let calendarCache = { events: [], holidays: [], fetchedAt: null, errors: [] };
+
+// Holidays that get a countdown automatically, matched against event titles in any calendar
+// (e.g. Google's US holidays calendar). "holidayCountdowns" in config.json replaces the list; false turns it off.
+const DEFAULT_HOLIDAY_COUNTDOWNS = ["New Year's Day", "Valentine's Day", 'Easter Sunday', "Mother's Day", 'Memorial Day',
+  "Father's Day", 'Independence Day', 'Labor Day', 'Halloween', 'Thanksgiving Day', 'Christmas Day'];
+const normTitle = (s) => String(s).replace(/[’‘]/g, "'").trim().toLowerCase();
+const holidayNames = () => new Set((config.holidayCountdowns === false ? []
+  : Array.isArray(config.holidayCountdowns) ? config.holidayCountdowns : DEFAULT_HOLIDAY_COUNTDOWNS).map(normTitle));
 
 async function refreshCalendars() {
   const from = new Date();
@@ -79,7 +87,15 @@ async function refreshCalendars() {
   const to = new Date(from);
   to.setDate(to.getDate() + 49);
 
+  // Holiday countdowns look a year ahead, further than the events shown on the calendar.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yearOut = new Date(today);
+  yearOut.setDate(yearOut.getDate() + 370);
+  const wanted = holidayNames();
+
   const events = [];
+  const holidays = new Map(); // date -> { title, date }
   const errors = [];
   for (const cal of config.calendars || []) {
     if (!cal.url || cal.url.includes('PASTE')) continue;
@@ -88,9 +104,15 @@ async function refreshCalendars() {
       const data = await ical.async.fromURL(url);
       for (const item of Object.values(data)) {
         if (item.type !== 'VEVENT') continue;
+        const text = (v) => (v && typeof v === 'object' ? v.val : v) || '';
+        if (wanted.has(normTitle(text(item.summary)))) {
+          for (const inst of ical.expandRecurringEvent(item, { from: today, to: yearOut })) {
+            const date = localDate(inst.start);
+            if (!holidays.has(date)) holidays.set(date, { title: text(inst.summary) || text(item.summary), date });
+          }
+        }
         const instances = ical.expandRecurringEvent(item, { from, to, expandOngoing: true });
         for (const inst of instances) {
-          const text = (v) => (v && typeof v === 'object' ? v.val : v) || '';
           const raw = text(inst.summary) || text(item.summary) || '(no title)';
           const { person, title } = personFromTitle(raw);
           events.push({
@@ -114,7 +136,10 @@ async function refreshCalendars() {
   }
   events.sort((a, b) => (a.start < b.start ? -1 : 1));
   // Keep the last good copy of a calendar if this fetch failed for every calendar.
-  if (events.length || !errors.length) calendarCache.events = events;
+  if (events.length || !errors.length) {
+    calendarCache.events = events;
+    calendarCache.holidays = [...holidays.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+  }
   calendarCache.fetchedAt = new Date().toISOString();
   calendarCache.errors = errors;
   version++;

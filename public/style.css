@@ -268,6 +268,38 @@ body.night .toast { opacity: 0.85; }
 .ring-text { display: flex; flex-direction: column; flex: 1; line-height: 1.2; }
 .ring-text b { font-size: 1.02em; }
 .ring-text .muted { font-size: 0.78em; }
+/* Home on quiet days: the big chore board */
+.board { flex: 1; min-height: 0; overflow: hidden; }
+.board-link { border: 0; background: none; color: var(--ink2); font-size: 0.82em; padding: 0.2em 0.4em; border-radius: 0.4em; }
+.board-link:hover { background: var(--chip); }
+.board-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5em, 1fr)); align-content: start; gap: 0.9em; margin-top: 0.6em; overflow: auto; }
+.board-head .muted { white-space: nowrap; }
+.board-head .stars { font-size: 1em; }
+.board-col { display: flex; flex-direction: column; gap: 0.45em; min-height: 0; padding: 0.9em 0.8em; border-radius: 0.9em; background: var(--bg); box-shadow: inset 0 0.25em 0 var(--c); }
+.board-head { display: flex; align-items: center; gap: 0.6em; margin-bottom: 0.3em; }
+.board-head .ring { width: 2.2em; height: 2.2em; }
+.board-head .ring-text b { font-family: Outfit, sans-serif; font-size: 1.15em; }
+.board-chore { display: flex; align-items: center; gap: 0.6em; width: 100%; min-height: 2.6em; padding: 0.4em 0.65em; border: 2px solid var(--line); border-radius: 0.7em; background: var(--panel); text-align: left; font-size: 0.95em; line-height: 1.25; }
+.board-chore:hover { border-color: var(--c); }
+.board-check { width: 1.45em; height: 1.45em; flex: none; border-radius: 50%; border: 3px solid var(--c); display: grid; place-items: center; color: #fff; }
+.board-check .ico { font-size: 0.85em; }
+.board-chore.done { border-color: transparent; background: var(--done-bg); }
+.board-chore.done .board-check { background: #2F8F5B; border-color: #2F8F5B; }
+.board-chore.done > span:last-child { text-decoration: line-through; color: var(--done-ink); }
+
+/* Home: the chores still left, under each person's ring */
+.chores-home { gap: 0.15em; }
+.chores-home .ring-row { min-height: 1.9em; }
+.chores-home .ring { width: 1.75em; height: 1.75em; }
+.chores-home .ring-text { flex-direction: row; align-items: baseline; gap: 0.5em; }
+.chores-home .ring-text .muted { font-size: 0.8em; }
+.chore-group + .chore-group { margin-top: 0.35em; }
+.mini-chore, .mini-more { display: flex; align-items: center; gap: 0.55em; width: calc(100% - 2.8em); margin-left: 2.8em; border: 0; background: none; padding: 0.3em 0.4em; border-radius: 0.5em; text-align: left; font-size: 0.86em; line-height: 1.25; }
+.mini-chore[hidden], .mini-more[hidden] { display: none; }
+.mini-chore:hover, .mini-more:hover { background: var(--chip); }
+.mini-check { width: 1.05em; height: 1.05em; flex: none; border-radius: 50%; border: 2px solid var(--c); }
+.mini-more { color: var(--ink2); font-size: 0.78em; padding-left: 2.1em; }
+.chores-home .mini-chore, .chores-home .mini-more { margin-left: 2.1em; width: calc(100% - 2.1em); }
 .stars { font-size: 0.85em; font-weight: 600; color: var(--warm); }
 .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.55em; }
 .strip-day { display: flex; flex-direction: column; gap: 0.25em; padding: 0.55em 0.7em; border: 0; border-radius: 0.8em; background: var(--panel); box-shadow: 0 1px 2px rgba(90, 60, 20, 0.06); text-align: left; min-width: 0; min-height: 4.4em; }

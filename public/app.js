@@ -203,8 +203,12 @@ function notesNodes() {
         el('div', { class: 'note-meta' }, [n.from, timeAgo(n.created)].filter(Boolean).join(' · '))),
       el('button', { class: 'note-x', 'aria-label': 'Remove note', onclick: () => removeNote(n) }, icon('x'))));
 }
+// Your own countdowns plus the big holidays from the calendar (yours win if both land on the same day).
 function countdownList(max = 5) {
-  return upcomingCountdowns(S.countdowns, now()).filter((c) => c.days <= S.countdownDays).slice(0, max);
+  const mine = upcomingCountdowns(S.countdowns, now());
+  const taken = new Set(mine.map((c) => ymd(c.when)));
+  const holidays = upcomingCountdowns((S.calendar.holidays || []).filter((h) => !taken.has(h.date)), now());
+  return [...mine, ...holidays].sort((a, b) => a.days - b.days).filter((c) => c.days <= S.countdownDays).slice(0, max);
 }
 function countdownCard(max = 3) {
   const title = 'Coming up';
@@ -217,10 +221,13 @@ function countdownCard(max = 3) {
 }
 function choreStats() {
   const todays = choresForToday(S.chores, now());
-  return S.people.map((p) => {
-    const mine = todays.filter((c) => c.person === p.name);
-    const done = mine.filter((c) => S.doneToday.includes(c.id)).length;
-    return { ...p, total: mine.length, done, stars: S.stars[p.name] || 0 };
+  const names = S.people.map((p) => p.name);
+  // Chores for "Everyone" (or someone no longer in the family list) get their own row at the end.
+  const groups = [...S.people.map((p) => ({ ...p, mine: todays.filter((c) => c.person === p.name) })),
+    { name: 'Everyone', color: '#8C8174', everyone: true, mine: todays.filter((c) => !names.includes(c.person)) }];
+  return groups.map((g) => {
+    const left = g.mine.filter((c) => !S.doneToday.includes(c.id));
+    return { ...g, total: g.mine.length, done: g.mine.length - left.length, left, stars: S.stars[g.name] || 0 };
   }).filter((p) => p.total);
 }
 function ring(color, frac) {
@@ -236,11 +243,36 @@ function ring(color, frac) {
 function choresCard() {
   const stats = choreStats();
   if (!stats.length) return null;
-  return el('section', { class: 'card-w' }, el('h2', {}, 'Chores today'),
-    stats.map((p) => el('button', { class: 'ring-row', onclick: () => showView('chores') },
-      ring(p.color, p.done / p.total),
-      el('span', { class: 'ring-text' }, el('b', {}, p.name), el('span', { class: 'muted' }, p.done === p.total ? 'All done' : `${p.done} of ${p.total} done`)),
-      el('span', { class: 'stars' }, `★ ${p.stars}`))));
+  // What's left under each person; click one to check it off. fitChores() trims the list to the space there is.
+  return el('section', { class: 'card-w chores-home' }, el('h2', {}, 'Chores today'),
+    stats.map((p) => el('div', { class: 'chore-group', style: `--c:${p.color}` },
+      el('button', { class: 'ring-row', onclick: () => showView('chores') },
+        ring(p.color, p.done / p.total),
+        el('span', { class: 'ring-text' }, el('b', {}, p.name), el('span', { class: 'muted' }, p.done === p.total ? 'All done' : `${p.done} of ${p.total} done`)),
+        p.everyone ? null : el('span', { class: 'stars' }, `★ ${p.stars}`)),
+      p.left.map((c) => el('button', { class: 'mini-chore', onclick: () => toggleChore(c) },
+        el('span', { class: 'mini-check' }), el('span', {}, c.title))),
+      el('button', { class: 'mini-more', hidden: true, onclick: () => showView('chores') }))));
+}
+// Hide chores (from whoever has the most showing) until the Home column fits, adding "+N more".
+function fitChores() {
+  const card = document.querySelector('#view-home .chores-home');
+  if (!card) return;
+  const col = card.parentElement;
+  const overflowing = () => col.scrollHeight > col.clientHeight + 1 || card.scrollHeight > card.clientHeight + 1;
+  const groups = [...card.querySelectorAll('.chore-group')];
+  for (let guard = 0; guard < 200 && overflowing(); guard++) {
+    const shown = (g) => [...g.querySelectorAll('.mini-chore:not([hidden])')];
+    // Swapping someone's only chore for "+1 more" saves no space, so leave those alone.
+    const canTrim = groups.filter((x) => shown(x).length > 1 || (shown(x).length === 1 && x.querySelector('.mini-chore[hidden]')));
+    if (!canTrim.length) break;
+    const g = canTrim.reduce((best, x) => (shown(x).length >= shown(best).length ? x : best), canTrim[0]);
+    const vis = shown(g);
+    vis[vis.length - 1].hidden = true;
+    const more = g.querySelector('.mini-more');
+    more.hidden = false;
+    more.textContent = `+${g.querySelectorAll('.mini-chore[hidden]').length} more`;
+  }
 }
 
 // ---------- leave-by countdown ----------
@@ -390,10 +422,51 @@ function weekStrip(d) {
       el('span', { class: 'strip-sum' }, evs.length ? evs.slice(0, 2).map((e) => e.title).join(' · ') : 'Nothing planned'));
   }));
 }
+// A quiet day (two or fewer timed events still to come) puts chores in the big space instead of the calendar.
+function quietDay(d) {
+  return eventsOn(d).filter((e) => !e.allDay && new Date(e.end) > d).length <= 2 && choreStats().length > 0;
+}
+// The big chore board: a column per person with every chore for today; click to check off.
+function choreBoard() {
+  const stats = choreStats();
+  return el('section', { class: 'card-w board' },
+    el('div', { class: 'tl-top' }, el('h2', {}, 'Chores today'),
+      el('button', { class: 'board-link', onclick: () => showView('chores') }, 'Add or change chores')),
+    el('div', { class: 'board-cols', style: `--n:${stats.length}` }, stats.map((p) => {
+      const ordered = [...p.left, ...p.mine.filter((c) => !p.left.includes(c))];
+      return el('div', { class: 'board-col', style: `--c:${p.color}` },
+        el('div', { class: 'board-head' }, ring(p.color, p.done / p.total),
+          el('div', { class: 'ring-text' }, el('b', {}, p.name),
+            el('span', { class: 'muted' }, p.done === p.total ? 'All done!' : `${p.done} of ${p.total} done`,
+              p.everyone ? null : el('span', { class: 'stars' }, ` · ★ ${p.stars}`)))),
+        ordered.map((c) => {
+          const done = S.doneToday.includes(c.id);
+          return el('button', { class: `board-chore${done ? ' done' : ''}`, onclick: () => toggleChore(c) },
+            el('span', { class: 'board-check' }, done ? icon('check') : null), el('span', {}, c.title));
+        }));
+    })));
+}
+// Today's events as a short list, for the side column on quiet days.
+function todayCard(d) {
+  const items = eventsOn(d).filter((e) => e.allDay || new Date(e.end) > d);
+  return el('section', { class: 'card-w' }, el('h2', {}, 'Today'),
+    items.length ? agendaList(d, items) : el('p', { class: 'muted' }, 'Nothing else on the calendar'));
+}
 function homeDay(d) {
-  const { allDay, body } = timeline(d);
   const out = rainOutlook(d);
   const banner = departureBanner('day');
+  if (quietDay(d)) {
+    return el('div', { class: 'home-day' },
+      el('header', { class: 'h-head' },
+        el('div', {}, el('div', { class: 'h-dayname' }, d.toLocaleDateString([], { weekday: 'long' })),
+          el('div', { class: 'h-sub' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }))),
+        el('div', { class: 'h-right' }, headWeather(d, out), bigClock(d, 'clock-m'))),
+      banner,
+      el('div', { class: 'day-grid' }, choreBoard(),
+        el('div', { class: 'side' }, el('div', { class: 'notes' }, notesNodes()), todayCard(d), countdownCard(banner ? 1 : 2))),
+      weekStrip(d));
+  }
+  const { allDay, body } = timeline(d);
   return el('div', { class: 'home-day' },
     el('header', { class: 'h-head' },
       el('div', {}, el('div', { class: 'h-dayname' }, d.toLocaleDateString([], { weekday: 'long' })),
@@ -431,10 +504,15 @@ function homeMorning(d) {
             el('div', { class: 'muted' }, `up to ${Math.round(wx.daily.temperature_2m_max[0])}° today · ${WX_WORD(wx.daily.weather_code[0])}`)))
           : el('p', { class: 'muted' }, 'Weather is loading…'),
         adviceList(weatherAdvice(d, 'morning')))),
-    el('div', { class: 'col' },
-      departureBanner('morning'),
-      el('section', { class: 'card-w grow' }, el('h2', {}, 'Today'), agendaList(d, eventsOn(d)))),
-    el('div', { class: 'col' }, el('div', { class: 'notes' }, notesNodes()), countdownCard(), choresCard()));
+    ...(quietDay(d) ? [
+      el('div', { class: 'col' }, departureBanner('morning'), choreBoard()),
+      el('div', { class: 'col' }, el('div', { class: 'notes' }, notesNodes()), todayCard(d), countdownCard()),
+    ] : [
+      el('div', { class: 'col' },
+        departureBanner('morning'),
+        el('section', { class: 'card-w grow' }, el('h2', {}, 'Today'), agendaList(d, eventsOn(d)))),
+      el('div', { class: 'col' }, el('div', { class: 'notes' }, notesNodes()), countdownCard(), choresCard()),
+    ]));
 }
 
 // ---------- Home: evening ----------
@@ -524,7 +602,11 @@ function renderHome(force = true) {
   const view = { morning: homeMorning, day: homeDay, evening: homeEvening, night: homeNight }[mode](d);
   box.replaceChildren(view);
   box.dataset.mode = mode;
+  fitChores();
 }
+// Sizes change once the fonts arrive or the window resizes; fit the chores again.
+if (document.fonts) document.fonts.ready.then(() => currentView === 'home' && renderHome());
+window.addEventListener('resize', () => currentView === 'home' && renderHome());
 
 // ---------- Week tab ----------
 function eventChip(e, big) {
