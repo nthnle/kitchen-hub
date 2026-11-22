@@ -52,6 +52,20 @@ On the home Wi-Fi, open `http://<pc-name>.local:8080/phone` — for a PC named `
 
 If the `.local` address doesn't open (some Android phones don't support it), use the IP address shown next to it instead, and reserve that address for the PC in your router so it doesn't change.
 
+### Using it away from home
+
+Kitchen Hub has no password, so **don't forward its port on your router**: anyone who found the address could read your calendar and post notes. Use [Tailscale](https://tailscale.com) instead (free for personal use). It links your phones and the kitchen PC into a private network that only your own devices can join.
+
+1. On the kitchen PC, install Tailscale (`winget install Tailscale.Tailscale`) and sign in.
+2. On each phone, install the Tailscale app and sign in with the same account.
+3. With Tailscale on, open `http://<pc-name>:8080/phone` from anywhere, e.g. `http://kitchen:8080/phone`. If the name doesn't load, use the PC's `100.x.x.x` address from the Tailscale app.
+
+Two tips:
+- In the Tailscale admin console, choose **Disable key expiry** for the kitchen PC, or it gets signed out after about six months.
+- Run `tailscale up --unattended` once on the PC so it stays connected even before anyone signs in to Windows.
+
+Windows normally treats Tailscale as a private network, so the firewall rule from `setup.ps1` already lets it through. If phones can't connect, check that the Tailscale network is set to Private in Windows settings.
+
 ## Configuration
 
 Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`](config.example.json) shows every option). Restart the PC, or the server, after changing it.
@@ -135,7 +149,7 @@ The pointer hides itself when the touchpad isn't in use.
 
 ## Privacy
 
-Kitchen Hub has no accounts and no cloud service of its own. Your notes, chores, groceries and photos are stored in the `data` folder on the kitchen PC and never leave your home network. To get its information, the PC contacts:
+Kitchen Hub has no accounts and no cloud service of its own. Your notes, chores, groceries and photos are stored in the `data` folder on the kitchen PC and never leave your home network (or your private Tailscale network, if you [use it away from home](#using-it-away-from-home)). To get its information, the PC contacts:
 
 - your calendar providers (the links in `config.json`),
 - [Open-Meteo](https://open-meteo.com) for weather and air quality, and the [National Weather Service](https://www.weather.gov) for alerts (both only receive your configured location),
