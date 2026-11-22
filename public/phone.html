@@ -17,7 +17,7 @@
 <body class="phone">
   <h1>Kitchen Hub</h1>
   <nav class="jump" aria-label="Jump to">
-    <a href="#notes">Notes</a><a href="#leave">Leave-by</a><a href="#groceries">Groceries</a><a href="#chores">Chores</a><a href="#countdowns">Countdowns</a><a href="#photo-frame">Photos</a><a href="#calendar">Calendar</a>
+    <a href="#notes">Notes</a><a href="#calendar">Calendar</a><a href="#leave">Leave-by</a><a href="#groceries">Groceries</a><a href="#chores">Chores</a><a href="#countdowns">Countdowns</a><a href="#photo-frame">Photos</a>
   </nav>
   <div id="alerts" class="alerts phone-alerts"></div>
 
@@ -37,6 +37,12 @@
     </form>
     <ul id="note-list" class="plain"></ul>
     <p class="muted small">Tap an item to change it.</p>
+  </section>
+
+  <section class="card" id="calendar">
+    <h2>📅 Calendar</h2>
+    <p class="muted small">Add events in your phone's calendar app as usual. The kitchen screen checks every 10 minutes, but Google can take a few hours to share a change.</p>
+    <button id="cal-refresh" class="ghost">Update calendar now</button>
   </section>
 
   <section class="card" id="leave">
@@ -116,12 +122,6 @@
       <button id="photo-view-close" class="ghost">Close</button>
     </div>
   </dialog>
-
-  <section class="card" id="calendar">
-    <h2>📅 Calendar</h2>
-    <p class="muted small">Add events in your phone's calendar app as usual. They appear on the kitchen screen within about 10 minutes.</p>
-    <button id="cal-refresh" class="ghost">Update calendar now</button>
-  </section>
 
   <script src="shared.js"></script>
   <script src="phone.js"></script>

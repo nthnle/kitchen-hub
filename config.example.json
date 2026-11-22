@@ -7,7 +7,7 @@
   ],
   "calendars": [
     { "name": "Family", "color": "#f2a33a", "url": "PASTE the secret iCal address here" },
-    { "name": "Holidays", "color": "#2f8f5b", "url": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics" }
+    { "name": "Holidays", "color": "#857a6e", "url": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics" }
   ],
   "calendarRefreshMinutes": 10,
   "weather": { "latitude": 40.71, "longitude": -74.01, "units": "fahrenheit" },

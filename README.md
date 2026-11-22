@@ -78,7 +78,7 @@ Kitchen Hub reads calendars through their private iCal links.
 - **iCloud:** on an iPhone, Calendar → Calendars → ⓘ next to the calendar → turn on **Public Calendar** → Share Link.
 - **US holidays:** Google's holiday calendar isn't part of your own calendar's link; add it as its own entry:
   ```json
-  { "name": "Holidays", "color": "#2f8f5b", "url": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics" }
+  { "name": "Holidays", "color": "#857a6e", "url": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics" }
   ```
 
 Treat private calendar links like passwords: anyone who has one can read that calendar. `config.json` is never committed to git.
