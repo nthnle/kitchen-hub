@@ -522,7 +522,8 @@ function homeMorning(d) {
       el('section', { class: 'card-w wx-card' },
         c ? el('div', { class: 'wx-now' }, icon(wxKind(c.weather_code), 'wx-big'),
           el('div', {}, el('div', { class: 'wx-temp-l' }, `${Math.round(c.temperature_2m)}°`),
-            el('div', { class: 'muted' }, `up to ${Math.round(wx.daily.temperature_2m_max[0])}° today · ${WX_WORD(wx.daily.weather_code[0])}`)))
+            el('div', { class: 'muted' }, `up to ${Math.round(wx.daily.temperature_2m_max[0])}° today · ${WX_WORD(wx.daily.weather_code[0])}`),
+            el('div', { class: 'muted' }, nextSun(d))))
           : el('p', { class: 'muted' }, 'Weather is loading…'),
         adviceList(weatherAdvice(d, 'morning')))),
     ...(quietDay(d) ? [
@@ -550,7 +551,8 @@ function homeEvening(d) {
       el('div', {}, greetLine(d, 'Good evening'),
         el('div', { class: 'h-clockline' }, bigClock(d, 'clock-l'), el('span', { class: 'h-sub' }, fmtLongDate(d)))),
       wx ? el('div', { class: 'pill-wx' }, icon(wxKind(wx.cur.weather_code, isDusk(d))),
-        el('div', {}, el('b', {}, `${Math.round(wx.cur.temperature_2m)}°`), lowTonight != null ? el('span', { class: 'muted' }, `low of ${lowTonight}° tonight`) : null)) : null),
+        el('div', {}, el('b', {}, `${Math.round(wx.cur.temperature_2m)}°`), lowTonight != null ? el('span', { class: 'muted' }, `low of ${lowTonight}° tonight`) : null,
+          el('span', { class: 'muted' }, nextSun(d)))) : null),
     el('div', { class: 'eve-grid' },
       el('section', { class: 'card-w' }, el('h2', {}, 'Before bed'),
         todays.length ? todays.map((ch) => el('button', { class: 'bed-row', onclick: () => toggleChore(ch) },
@@ -595,7 +597,7 @@ function homeNight(d) {
       el('div', { class: 'night-date' }, fmtLongDate(d)),
       el('div', { class: 'night-tmr' },
         el('span', { class: 'night-label' }, d.getHours() < 12 ? 'TODAY' : 'TOMORROW'),
-        f1 ? el('div', { class: 'night-line' }, icon(wxKind(f1.code)), `${f1.hi}° · ${WX_WORD(f1.code)}`) : null,
+        f1 ? el('div', { class: 'night-line' }, icon(wxKind(f1.code)), [`${f1.hi}°`, WX_WORD(f1.code), nextSun(d).replace(/^S/, 's')].filter(Boolean).join(' · ')) : null,
         evs.map((e) => el('div', { class: 'night-line' }, `${e.allDay ? 'All day' : fmtTime(e.start)} · ${e.title}`)))),
     S.photos.length ? el('div', { class: 'night-photo' }, el('img', { src: `/photos/${encodeURIComponent(nightPhoto)}`, alt: '' })) : null,
     el('div', { class: 'night-hint' }, `${TAP} or press any key to wake`));
@@ -639,11 +641,21 @@ function bigClock(d, cls) {
   const { t, ap } = clockParts(d);
   return el('div', { class: `bigclock ${cls}` }, el('span', { class: 'bc-t' }, t), el('span', { class: 'bc-ap' }, ap));
 }
+// Whichever comes next: "Sunrise 6:52 AM" before dawn, "Sunset 5:23 PM" in the day, tomorrow's sunrise after dark.
+function nextSun(d) {
+  const dd = wx && wx.daily;
+  if (!dd || !dd.sunrise) return '';
+  const rise = new Date(dd.sunrise[0]), set = new Date(dd.sunset[0]);
+  if (ymd(rise) !== ymd(d)) return ''; // forecast is from another day (previews)
+  if (d < rise) return `Sunrise ${fmtClock(rise)}`;
+  if (d < set) return `Sunset ${fmtClock(set)}`;
+  return dd.sunrise[1] ? `Sunrise ${fmtClock(new Date(dd.sunrise[1]))}` : '';
+}
 function headWeather(d, outlook) {
   if (!wx) return null;
   return el('div', { class: 'h-wx' }, icon(wxKind(wx.cur.weather_code, isDusk(d)), 'wx-mid'),
     el('div', {}, el('div', { class: 'h-wx-t' }, `${Math.round(wx.cur.temperature_2m)}°`),
-      el('div', { class: 'muted' }, `H ${Math.round(wx.daily.temperature_2m_max[0])}° L ${Math.round(wx.daily.temperature_2m_min[0])}° · ${outlook || ''}`)));
+      el('div', { class: 'muted' }, [`H ${Math.round(wx.daily.temperature_2m_max[0])}° L ${Math.round(wx.daily.temperature_2m_min[0])}°`, outlook, nextSun(d)].filter(Boolean).join(' · '))));
 }
 let lastHomeKey = '';
 function renderHome(force = true) {

@@ -13,7 +13,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Groceries.** A shared list with one-click "Add again" buttons for things you buy often.
 - **Notes.** Post a note from your phone ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
-- **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunset — and National Weather Service alerts (US) as a banner that stays on screen.
+- **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
