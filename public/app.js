@@ -1131,8 +1131,6 @@ async function load(force) {
     lastLoadOk = Date.now();
     renderCalendar(); renderChores(); renderGrocery(); renderServices();
     renderAlerts(); renderHome(); renderStatus();
-    const short = (u) => (u || '').replace(/^https?:\/\//, '');
-    document.getElementById('phone-hint').textContent = `On your phone: ${short(S.phoneUrlName)} or ${short(S.phoneUrl)}`;
   } catch (e) {
     if (Date.now() - lastLoadOk > 15e3) document.getElementById('cal-status').textContent = 'Can’t reach the Kitchen Hub server. Retrying…';
   }}

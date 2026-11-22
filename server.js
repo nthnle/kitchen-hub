@@ -220,9 +220,7 @@ function prune() {
   }
 }
 
-// This PC's address on the home network. Phones often can't look up a Windows
-// PC by name, so the screen shows the IP instead. Looked up on every request
-// because the router may hand out a different address after a restart.
+// This PC's address on the home network, printed when the server starts.
 const VIRTUAL_ADAPTER = /vEthernet|VirtualBox|VMware|Hyper-V|WSL|Loopback|Bluetooth|Tailscale|ZeroTier/i;
 function lanAddress() {
   const found = [];
@@ -268,9 +266,6 @@ app.get('/api/state', (req, res) => {
     notes: state.notes.filter((n) => new Date(n.expires).getTime() > Date.now()),
     alerts: alertsCache.alerts,
     photos: listPhotos(),
-    phoneUrl: `http://${lanAddress()}:${PORT}/phone`,
-    // Phones that support .local names (iPhones, most others) can use this one; it survives IP changes.
-    phoneUrlName: `http://${os.hostname().toLowerCase()}.local:${PORT}/phone`,
     recentGroceries: recentGroceries(),
   });
 });
@@ -578,12 +573,6 @@ async function calendarLoop() {
 }
 calendarLoop();
 
-// Tell the screens when this PC's network address changes (e.g. Ethernet to Wi-Fi).
-let lastLan = lanAddress();
-setInterval(() => {
-  const now = lanAddress();
-  if (now !== lastLan) { lastLan = now; version++; }
-}, 30 * 1000);
 refreshAlerts();
 setInterval(refreshAlerts, 5 * 60 * 1000);
 prune();

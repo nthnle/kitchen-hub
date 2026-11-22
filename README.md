@@ -49,9 +49,9 @@ The setup script installs everything else (Node.js).
 
 ### On your phone
 
-On the home Wi-Fi, open `http://<pc-name>.local:8080/phone` — for a PC named `kitchen`, that's `http://kitchen.local:8080/phone`. The exact address is in the bottom-right corner of the kitchen screen. Then use **Share → Add to Home Screen** for an app icon.
+On the home Wi-Fi, open `http://<pc-name>.local:8080/phone` — for a PC named `kitchen`, that's `http://kitchen.local:8080/phone`. `setup.ps1` prints the exact address when it finishes (the PC's name is also under *Settings → System → About*). Then use **Share → Add to Home Screen** for an app icon. The kitchen screen doesn't show the address, so guests don't see it.
 
-If the `.local` address doesn't open (some Android phones don't support it), use the IP address shown next to it instead, and reserve that address for the PC in your router so it doesn't change.
+If the `.local` address doesn't open (some Android phones don't support it), use the PC's IP address instead (setup prints it too, or run `ipconfig` on the PC), and reserve that address for the PC in your router so it doesn't change.
 
 ### Using it away from home
 
@@ -145,7 +145,7 @@ The pointer hides itself when the touchpad isn't in use.
 
 ## Troubleshooting
 
-- **Phone page won't load:** the phone must be on the same Wi-Fi. If the `.local` address doesn't work, use the IP address from the corner of the kitchen screen.
+- **Phone page won't load:** the phone must be on the same Wi-Fi. If the `.local` address doesn't work, use the PC's IP address (run `ipconfig` on the PC).
 - **Not full screen:** press any key. Re-running `setup.ps1` as administrator turns off Edge's "startup boost", the usual cause.
 - **A note in the bottom-left corner:** the calendar, weather or server stopped updating. It clears itself once things recover.
 - **"Couldn't update the calendar":** the calendar link in `config.json` is wrong or was reset. Copy it again.

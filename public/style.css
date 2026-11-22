@@ -186,7 +186,6 @@ button.ghost { background: none; border: 1px solid var(--input-border); border-r
 }
 .tabs svg { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .tabs button.active { background: var(--accent-fill); color: #fff; font-weight: 600; }
-.phone-hint { position: fixed; right: 1rem; bottom: 0.4rem; font-size: 0.75rem; color: var(--muted); }
 body.night .toast { opacity: 0.85; }
 
 /* ---------- Home (sized in design pixels via --u; 1em = 22 design px) ---------- */
@@ -411,7 +410,7 @@ body.dusk .add-row input { background: var(--panel); }
 
 /* night: dim and warm, so the screen doesn't light up the kitchen */
 body.night { background: #14100C; }
-body.night .tabs, body.night .phone-hint { display: none; }
+body.night .tabs { display: none; }
 .home-night { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 32em; gap: 3.2em; align-items: center; color: #C9B9A3; position: relative; cursor: pointer; }
 .home-night.no-photo { grid-template-columns: 1fr; justify-items: center; text-align: center; }
 .night-main { display: flex; flex-direction: column; gap: 1.1em; }

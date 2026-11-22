@@ -62,4 +62,4 @@ Write-Host '  - Turn on automatic sign-in for this Windows account'
 Write-Host '  - Open Edge once and sign in to Netflix, YouTube, etc.'
 $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -like '192.168.*' -or $_.IPAddress -like '10.*' } | Select-Object -First 1).IPAddress
 if (-not $ip) { $ip = $env:COMPUTERNAME.ToLower() }
-Write-Host "  - Phone page: http://${ip}:$port/phone (shown on the kitchen screen too)"
+Write-Host "  - Phone page: http://$($env:COMPUTERNAME.ToLower()).local:$port/phone (or http://${ip}:$port/phone)"
