@@ -8,7 +8,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 
 - **Changes with the time of day.** Mornings show a big clock, weather tips ("Cool start — bring a jacket") and a countdown to when you need to leave. Daytime shows today as a timeline. Evenings show chores left before bed, tomorrow's plan and the grocery list. Late at night it dims to a quiet clock, and after midnight it turns the monitor off.
 - **Calendar.** Reads your Google or iCloud calendars (and US holidays). Click an event for its time, place and notes. Events titled `Sam: Soccer` show in Sam's color.
-- **Chores.** Daily or weekly chores per person, with progress rings and weekly stars.
+- **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars.
 - **Groceries.** A shared list with one-click "Add again" buttons for things you buy often.
 - **Notes.** Post a note from your phone ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year.
@@ -115,7 +115,7 @@ The pointer hides itself when the touchpad isn't in use.
 
 - **Notes** for the kitchen, from someone, kept for 1 day, 3 days or a week.
 - **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before.
-- **Groceries**, **chores** (who, and which days — none means every day), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
+- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
 - Tap any note, chore, countdown or leave-by time to change it.
 
 ### On the kitchen screen

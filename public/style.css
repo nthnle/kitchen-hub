@@ -471,6 +471,8 @@ form.editing > button:not([type="button"]) { background: #2F7A55; }
 .stack { display: flex; flex-direction: column; gap: 0.6rem; }
 .stack input, .stack select { padding: 0.7rem; border-radius: 12px; border: 1px solid var(--input-border); background: var(--bg); min-height: 48px; }
 .days { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+form [hidden] { display: none !important; }
+.chore-add input[type=date] { flex: 0 0 auto; min-width: 0; }
 .days label span { display: inline-block; padding: 0.5rem 0.7rem; border-radius: 10px; border: 1px solid var(--input-border); }
 .days input { display: none; }
 .days input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); }

@@ -614,6 +614,8 @@ function renderChores() {
 // Add a chore from the kitchen screen (press N on the Chores tab).
 const caDays = document.getElementById('ca-days');
 DAY_NAMES.forEach((d, i) => caDays.append(el('label', {}, el('input', { type: 'checkbox', value: i }), el('span', {}, d))));
+const caWhen = whenPicker({ select: document.getElementById('ca-when'), days: caDays,
+  date: document.getElementById('ca-date'), hint: document.getElementById('ca-days-hint'), today: now });
 function fillChorePeople() {
   const sel = document.getElementById('ca-person');
   const keep = sel.value;
@@ -625,11 +627,12 @@ document.getElementById('chore-add').addEventListener('submit', (e) => {
   const input = document.getElementById('ca-title');
   const title = input.value.trim();
   if (!title) return input.focus();
-  const days = [...caDays.querySelectorAll('input:checked')].map((i) => Number(i.value));
+  const when = caWhen.get();
+  if (when.date === '') return document.getElementById('ca-date').focus();
   const person = document.getElementById('ca-person').value;
   input.value = '';
-  caDays.querySelectorAll('input').forEach((i) => { i.checked = false; });
-  act(() => api.send('POST', '/api/chores', { title, person, days }));
+  caWhen.reset();
+  act(() => api.send('POST', '/api/chores', { title, person, ...when }));
   input.focus(); // ready for the next one
 });
 

@@ -41,8 +41,10 @@
       <form id="chore-add" class="chore-add" autocomplete="off">
         <input id="ca-title" placeholder="New chore, e.g. Feed the dog  (press N)" maxlength="80" aria-label="New chore">
         <select id="ca-person" aria-label="Who"></select>
+        <select id="ca-when" aria-label="When"></select>
         <div id="ca-days" class="days" role="group" aria-label="Days (none = every day)"></div>
-        <span class="muted small">No days = every day</span>
+        <span id="ca-days-hint" class="muted small">No days = every day</span>
+        <input id="ca-date" type="date" aria-label="Date" hidden>
         <button>Add chore</button>
       </form>
       <div id="chores" class="chore-cols"></div>

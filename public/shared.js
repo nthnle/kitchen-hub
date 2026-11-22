@@ -104,10 +104,61 @@ function alertBanners(alerts) {
   });
 }
 
-// Chores with no days set happen every day.
+// Chores with no days set happen every day; one with a date happens only that day.
 function choresForToday(chores, date = new Date()) {
   const dow = date.getDay();
-  return chores.filter((c) => !c.days || !c.days.length || c.days.includes(dow));
+  const day = ymd(date);
+  return chores.filter((c) => (c.date ? c.date === day : !c.days || !c.days.length || c.days.includes(dow)));
+}
+
+// How often a chore happens, in words: "Daily", "Mon Wed", "Tomorrow only", "Sat, Nov 28 only".
+function choreWhen(c, today = new Date()) {
+  if (c.date) {
+    const d = new Date(`${c.date}T12:00`);
+    const n = Math.round((d - new Date(`${ymd(today)}T12:00`)) / 864e5);
+    return n === 0 ? 'Today only' : n === 1 ? 'Tomorrow only' : n < 0 ? 'Done (one time)'
+      : `${d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} only`;
+  }
+  return c.days && c.days.length ? c.days.map((d) => DAY_NAMES[d]).join(' ') : 'Daily';
+}
+
+// The "When" control on chore forms: repeat on weekdays, or just once (today, tomorrow, a date).
+function whenPicker({ select, days, date, hint, today = () => new Date() }) {
+  const dayStr = (n) => { const d = today(); d.setDate(d.getDate() + n); return ymd(d); };
+  select.replaceChildren(
+    el('option', { value: 'repeat' }, 'Every week'),
+    el('option', { value: 'today' }, 'Just today'),
+    el('option', { value: 'tomorrow' }, 'Just tomorrow'),
+    el('option', { value: 'date' }, 'Just once, on a date…'));
+  const sync = () => {
+    days.hidden = select.value !== 'repeat';
+    if (hint) hint.hidden = select.value !== 'repeat';
+    date.hidden = select.value !== 'date';
+    date.required = select.value === 'date';
+  };
+  select.addEventListener('change', () => {
+    date.min = dayStr(0);
+    if (select.value === 'date' && !date.value) date.value = dayStr(2);
+    sync();
+  });
+  const checks = () => [...days.querySelectorAll('input')];
+  const picker = {
+    // The fields to send: { days } for a repeating chore, { days: [], date } for a one-time one.
+    get() {
+      const v = select.value;
+      if (v === 'repeat') return { days: checks().filter((i) => i.checked).map((i) => Number(i.value)) };
+      return { days: [], date: v === 'today' ? dayStr(0) : v === 'tomorrow' ? dayStr(1) : date.value };
+    },
+    set(c) {
+      checks().forEach((i) => { i.checked = !c.date && (c.days || []).includes(Number(i.value)); });
+      select.value = !c.date ? 'repeat' : c.date === dayStr(0) ? 'today' : c.date === dayStr(1) ? 'tomorrow' : 'date';
+      date.value = select.value === 'date' ? c.date : '';
+      sync();
+    },
+    reset() { picker.set({}); },
+  };
+  sync();
+  return picker;
 }
 
 function personColor(people, name) {

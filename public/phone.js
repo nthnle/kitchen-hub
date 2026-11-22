@@ -76,13 +76,14 @@ function render() {
   sel.value = keep;
 
   // All chores
-  document.getElementById('chore-list').replaceChildren(...S.chores.map((c) => editRow(
+  // (One-time chores from earlier this week stay on the server for the star counts, but aren't listed.)
+  document.getElementById('chore-list').replaceChildren(...S.chores.filter((c) => !c.date || c.date >= ymd(new Date())).map((c) => editRow(
     () => startEdit('chore', c.id, () => {
       document.getElementById('chore-title').value = c.title;
       document.getElementById('chore-person').value = c.person || '';
-      setDays(daysBox, c.days);
+      choreWhenPicker.set(c);
     }),
-    [el('b', {}, c.title), el('span', { class: 'muted small' }, ` · ${c.person || 'Everyone'} · ${c.days && c.days.length ? c.days.map((d) => DAY_NAMES[d]).join(' ') : 'Daily'}`)],
+    [el('b', {}, c.title), el('span', { class: 'muted small' }, ` · ${c.person || 'Everyone'} · ${choreWhen(c)}`)],
     () => confirm(`Delete "${c.title}"?`) && act(() => api.send('DELETE', `/api/chores/${c.id}`)))));
 
   // Weather alerts (only re-drawn when they change, so an open one stays open)
@@ -162,6 +163,8 @@ const daysBox = document.getElementById('chore-days');
 DAY_NAMES.forEach((d, i) => {
   daysBox.append(el('label', {}, el('input', { type: 'checkbox', value: i }), el('span', {}, d)));
 });
+const choreWhenPicker = whenPicker({ select: document.getElementById('chore-when'), days: daysBox,
+  date: document.getElementById('chore-date'), hint: document.getElementById('chore-days-hint') });
 
 // Leave-by day picker (weekdays picked by default)
 const depDaysBox = document.getElementById('dep-days');
@@ -193,9 +196,8 @@ document.getElementById('chore-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const title = document.getElementById('chore-title').value.trim();
   const person = document.getElementById('chore-person').value;
-  const days = [...daysBox.querySelectorAll('input:checked')].map((i) => Number(i.value));
   if (!title) return;
-  saveOrAdd('chore', '/api/chores', { title, person, days });
+  saveOrAdd('chore', '/api/chores', { title, person, ...choreWhenPicker.get() });
 });
 
 document.getElementById('note-form').addEventListener('submit', (e) => {
@@ -219,7 +221,7 @@ document.getElementById('countdown-form').addEventListener('submit', (e) => {
   saveOrAdd('countdown', '/api/countdowns', { title, date, yearly });
 });
 
-makeEditable('chore-form', 'chore', 'Add chore');
+makeEditable('chore-form', 'chore', 'Add chore', () => choreWhenPicker.reset());
 makeEditable('note-form', 'note', 'Post note');
 makeEditable('countdown-form', 'countdown', 'Add countdown');
 makeEditable('dep-form', 'dep', 'Add leave-by time', resetDepDays);

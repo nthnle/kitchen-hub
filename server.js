@@ -179,15 +179,18 @@ function setMonitor(on) {
   });
 }
 
-// ---------- tidy-up: expired notes and past countdowns ----------
+// ---------- tidy-up: expired notes, past countdowns and old one-time chores ----------
 function prune() {
   const now = Date.now();
   const today = localDate();
   const notes = state.notes.filter((n) => new Date(n.expires).getTime() > now);
   const countdowns = state.countdowns.filter((c) => c.yearly || c.date >= today);
-  if (notes.length !== state.notes.length || countdowns.length !== state.countdowns.length) {
+  // One-time chores stay (hidden) until the week is over, so their stars still count.
+  const chores = state.chores.filter((c) => !c.date || c.date >= weekStart());
+  if (notes.length !== state.notes.length || countdowns.length !== state.countdowns.length || chores.length !== state.chores.length) {
     state.notes = notes;
     state.countdowns = countdowns;
+    state.chores = chores;
     saveState();
   }
 }
@@ -265,9 +268,12 @@ const findOr404 = (list, req, res) => {
 };
 
 // Chores
+// A chore repeats on its weekdays (none = every day), or happens once on "date" (YYYY-MM-DD).
 function choreFields(body) {
   const title = String(body.title || '').trim().slice(0, 80);
-  return title ? { title, person: String(body.person || '').slice(0, 40), days: cleanDays(body.days) } : null;
+  if (!title) return null;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : undefined;
+  return { title, person: String(body.person || '').slice(0, 40), days: date ? [] : cleanDays(body.days), date };
 }
 app.post('/api/chores', (req, res) => {
   const f = choreFields(req.body);
@@ -304,10 +310,13 @@ app.post('/api/chores/:id/toggle', (req, res) => {
 });
 
 // Stars this week (since Sunday), per person.
-function starCounts() {
+function weekStart() {
   const start = new Date();
   start.setDate(start.getDate() - start.getDay());
-  const since = localDate(start);
+  return localDate(start);
+}
+function starCounts() {
+  const since = weekStart();
   const byId = Object.fromEntries(state.chores.map((c) => [c.id, c.person]));
   const counts = {};
   for (const [day, ids] of Object.entries(state.done)) {

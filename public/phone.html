@@ -75,8 +75,10 @@
     <form id="chore-form" class="stack">
       <input id="chore-title" placeholder="Chore, e.g. Feed the dog" required autocomplete="off">
       <select id="chore-person"></select>
+      <select id="chore-when" aria-label="When"></select>
       <div id="chore-days" class="days"></div>
-      <p class="muted small">Leave every day unselected for a daily chore.</p>
+      <p id="chore-days-hint" class="muted small">Leave every day unselected for a daily chore.</p>
+      <input id="chore-date" type="date" aria-label="Date" hidden>
       <button>Add chore</button>
     </form>
     <ul id="chore-list" class="plain"></ul>
