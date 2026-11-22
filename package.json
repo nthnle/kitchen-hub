@@ -1,0 +1,22 @@
+{
+  "name": "kitchen-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Family calendar, chores, groceries, notes and photo frame for a kitchen screen, edited from your phone",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["kitchen", "family", "calendar", "dashboard", "kiosk", "chores"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.22.3",
+    "multer": "^2.5.0",
+    "node-ical": "^0.27.6"
+  }
+}

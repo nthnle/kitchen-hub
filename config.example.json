@@ -1,0 +1,30 @@
+{
+  "port": 8080,
+  "people": [
+    { "name": "Mom", "color": "#d45c79" },
+    { "name": "Dad", "color": "#3f78c9" },
+    { "name": "Kid", "color": "#2f8f5b" }
+  ],
+  "calendars": [
+    { "name": "Family", "color": "#f2a33a", "url": "PASTE the secret iCal address here" },
+    { "name": "Holidays", "color": "#2f8f5b", "url": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics" }
+  ],
+  "calendarRefreshMinutes": 10,
+  "weather": { "latitude": 40.71, "longitude": -74.01, "units": "fahrenheit" },
+  "photoFrameAfterMinutes": 5,
+  "slideSeconds": 8,
+  "screenOffAt": "0:00",
+  "showCountdownsWithinDays": 30,
+  "modes": { "morning": "6:00", "weekendMorning": "8:00", "day": "10:00", "evening": "17:00", "night": "22:00" },
+  "services": [
+    { "name": "Netflix", "url": "https://www.netflix.com/browse", "color": "#e50914" },
+    { "name": "YouTube", "url": "https://www.youtube.com", "color": "#ff0000" },
+    { "name": "Disney+", "url": "https://www.disneyplus.com/home", "color": "#113ccf" },
+    { "name": "Prime Video", "url": "https://www.primevideo.com", "color": "#00a8e1" },
+    { "name": "Max", "url": "https://play.max.com", "color": "#002be7" },
+    { "name": "Hulu", "url": "https://www.hulu.com/hub/home", "color": "#1ce783" },
+    { "name": "Paramount+", "url": "https://www.paramountplus.com", "color": "#0064ff" },
+    { "name": "Peacock", "url": "https://www.peacocktv.com", "color": "#f0b400" },
+    { "name": "Apple TV", "url": "https://tv.apple.com", "color": "#555555" }
+  ]
+}
