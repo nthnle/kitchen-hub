@@ -164,3 +164,7 @@ npm start                            # http://localhost:8080 and /phone
 | `scripts/start-kiosk.ps1` | Runs at sign-in: keeps the server running and opens Edge full screen. |
 
 The screens poll `/api/version` every few seconds and reload `/api/state` when it changes. Changes go through small JSON endpoints (`POST`/`PUT`/`DELETE` on `/api/chores`, `/api/notes`, `/api/countdowns`, `/api/departures`, `/api/grocery`). Add `?at=<date-time>` to the kitchen screen's URL to preview any time of day; previews never turn the monitor off.
+
+## License
+
+[MIT](LICENSE): free to use, change and share, including for your own family's kitchen.
