@@ -70,7 +70,37 @@ function cleanDescription(s) {
     .replace(/\n{3,}/g, '\n\n').trim().slice(0, 600);
 }
 
-let calendarCache = { events: [], holidays: [], fetchedAt: null, errors: [] };
+let calendarCache = { events: [], holidays: [], noSchool: [], fetchedAt: null, errors: [] };
+
+// Days with no school, so "School drop-off" can skip them. On a calendar marked "school": true in config.json,
+// days off are events like "Student Holiday", "Thanksgiving Break" or "Staff Development Day". Big US holidays
+// from any calendar count too.
+const NO_SCHOOL = /\b(no school|no classes|student holiday|holidays?|break|vacation|closed|closure|teacher|staff|professional (development|learning)|in-?service|work ?day|planning day|bad weather|inclement|non-?instructional)\b/i;
+const NOT_A_DAY_OFF = /\b(early (release|dismissal)|half day|minimum day|first day|last day|appreciation|picture|report card|meeting|board|game)\b/i;
+const NO_SCHOOL_HOLIDAYS = ["new year's day", 'martin luther king jr. day', 'memorial day', 'independence day', 'labor day',
+  'thanksgiving day', 'christmas eve', 'christmas day', "new year's eve"];
+// Or list them in config.json, for districts with no calendar link: "schoolDaysOff": ["2026-09-07", "2026-11-23..2026-11-27"].
+function configDaysOff() {
+  const days = [];
+  for (const entry of Array.isArray(config.schoolDaysOff) ? config.schoolDaysOff : []) {
+    const [a, b = a] = String(entry).split('..').map((s) => s.trim());
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(a) || !/^\d{4}-\d{2}-\d{2}$/.test(b)) continue;
+    const d = new Date(`${a}T12:00`);
+    for (let n = 0; localDate(d) <= b && n < 60; n++) { days.push(localDate(d)); d.setDate(d.getDate() + 1); }
+  }
+  return days;
+}
+function noSchoolDays(item, cal, title) {
+  const isOff = (cal.school && NO_SCHOOL.test(title) && !NOT_A_DAY_OFF.test(title)) || NO_SCHOOL_HOLIDAYS.includes(normTitle(title));
+  if (!isOff) return [];
+  const days = [];
+  const d = new Date(item.start);
+  d.setHours(12, 0, 0, 0);
+  const end = new Date(item.end || item.start);
+  // An all-day event's end is the morning after its last day.
+  do { days.push(localDate(d)); d.setDate(d.getDate() + 1); } while (d < end && days.length < 30);
+  return days;
+}
 
 // Holidays that get a countdown automatically, matched against event titles in any calendar
 // (e.g. Google's US holidays calendar). "holidayCountdowns" in config.json replaces the list; false turns it off.
@@ -96,6 +126,7 @@ async function refreshCalendars() {
 
   const events = [];
   const holidays = new Map(); // date -> { title, date }
+  const noSchool = new Set();
   const errors = [];
   for (const cal of config.calendars || []) {
     if (!cal.url || cal.url.includes('PASTE')) continue;
@@ -115,6 +146,7 @@ async function refreshCalendars() {
         for (const inst of instances) {
           const raw = text(inst.summary) || text(item.summary) || '(no title)';
           const { person, title } = personFromTitle(raw);
+          for (const day of noSchoolDays(inst, cal, raw)) noSchool.add(day);
           events.push({
             title,
             person,
@@ -139,6 +171,7 @@ async function refreshCalendars() {
   if (events.length || !errors.length) {
     calendarCache.events = events;
     calendarCache.holidays = [...holidays.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+    calendarCache.noSchool = [...noSchool].sort();
   }
   calendarCache.fetchedAt = new Date().toISOString();
   calendarCache.errors = errors;
@@ -258,7 +291,7 @@ app.get('/api/state', (req, res) => {
     idleMinutes: config.photoFrameAfterMinutes ?? 5,
     slideSeconds: config.slideSeconds ?? 8,
     screenOffAt: config.screenOffAt === undefined ? '0:00' : config.screenOffAt, // false = never
-    calendar: calendarCache,
+    calendar: { ...calendarCache, noSchool: [...new Set([...calendarCache.noSchool, ...configDaysOff()])].sort() },
     chores: state.chores.map((c) => (c.date ? { ...c, doneOn: doneOn(c) } : c)),
     trash: trashChores(),
     doneToday: state.done[today] || [],
@@ -468,7 +501,7 @@ app.delete('/api/countdowns/:id', (req, res) => {
 function departureFields(body) {
   const label = String(body.label || '').trim().slice(0, 40);
   const time = String(body.time || '');
-  return label && /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? { label, time, days: cleanDays(body.days) } : null;
+  return label && /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? { label, time, days: cleanDays(body.days), school: !!body.school } : null;
 }
 app.post('/api/departures', (req, res) => {
   const f = departureFields(req.body);

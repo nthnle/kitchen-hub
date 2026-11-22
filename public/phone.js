@@ -112,8 +112,10 @@ function render() {
       document.getElementById('dep-label').value = d.label;
       document.getElementById('dep-time').value = d.time;
       setDays(depDaysBox, d.days);
+      depSchool.checked = schoolDeparture(d);
+      depSchoolTouched = true;
     }),
-    [el('b', {}, d.label), el('span', { class: 'muted small' }, ` · ${depTime(d.time)} · ${depDays(d.days)}`)],
+    [el('b', {}, d.label), el('span', { class: 'muted small' }, ` · ${depTime(d.time)} · ${depDays(d.days)}${schoolDeparture(d) ? ' · skipped on days off' : ''}`)],
     () => confirm(`Delete "${d.label}"?`) && act(() => api.send('DELETE', `/api/departures/${d.id}`)))));
 
   // Countdowns
@@ -168,7 +170,18 @@ const choreWhenPicker = whenPicker({ select: document.getElementById('chore-when
 
 // Leave-by day picker (weekdays picked by default)
 const depDaysBox = document.getElementById('dep-days');
-const resetDepDays = () => depDaysBox.querySelectorAll('input').forEach((i) => { i.checked = i.value >= 1 && i.value <= 5; });
+const depSchool = document.getElementById('dep-school');
+let depSchoolTouched = false;
+const resetDepDays = () => {
+  depDaysBox.querySelectorAll('input').forEach((i) => { i.checked = i.value >= 1 && i.value <= 5; });
+  depSchool.checked = false;
+  depSchoolTouched = false;
+};
+// "School drop-off" ticks "skip on days with no school" for you, unless you've changed it yourself.
+depSchool.addEventListener('change', () => { depSchoolTouched = true; });
+document.getElementById('dep-label').addEventListener('input', (e) => {
+  if (!depSchoolTouched) depSchool.checked = /school/i.test(e.target.value);
+});
 DAY_NAMES.forEach((d, i) => {
   depDaysBox.append(el('label', {}, el('input', { type: 'checkbox', value: i }), el('span', {}, d)));
 });
@@ -179,7 +192,7 @@ document.getElementById('dep-form').addEventListener('submit', (e) => {
   const time = document.getElementById('dep-time').value;
   const days = [...depDaysBox.querySelectorAll('input:checked')].map((i) => Number(i.value));
   if (!label || !time) return;
-  saveOrAdd('dep', '/api/departures', { label, time, days });
+  saveOrAdd('dep', '/api/departures', { label, time, days, school: depSchool.checked });
 });
 
 document.getElementById('grocery-form').addEventListener('submit', (e) => {

@@ -83,6 +83,7 @@ Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`
 | `screenOffAt` | When the monitor turns off for the night once nobody's using it (default `"0:00"`, midnight; `false` keeps it on). Any key or touch wakes it, and it turns back on when morning starts. |
 | `showCountdownsWithinDays` | Show a countdown on the kitchen screen once it's this many days away (default 60). The phone page always lists them all. |
 | `trash` | Pickup days, e.g. `[{"name": "Trash", "days": ["Mon", "Thu"]}, {"name": "Recycling", "days": ["Wed"]}]`. The evening before each pickup, "Put out the trash" (or recycling) joins the chores for everyone, or for one person if you add `"person": "Dad"` (they get the star). If nobody does it, it's still there on pickup morning until noon. |
+| `schoolDaysOff` | Days with no school, for leave-by times set to skip them: dates or ranges like `"2026-11-23..2026-11-27"`. Only needed if your district has no calendar link (see [School calendar](#school-calendar)). |
 | `holidayCountdowns` | Calendar events that get a countdown automatically, by exact title. Defaults to New Year's Day, Valentine's Day, Easter Sunday, Mother's Day, Memorial Day, Father's Day, Independence Day, Labor Day, Halloween, Thanksgiving Day and Christmas Day (as named in Google's US holidays calendar). Give your own list, or `false` for none. |
 | `holidayDecor` | Holiday garlands and greetings on Home, the New Year's Eve countdown (the monitor stays on until 12:30 that night) and the Lunar New Year countdown. `false` turns them all off, seasonal garlands included. |
 | `seasonDecor` | The thin seasonal garland between holidays. `false` keeps only the holiday ones. |
@@ -100,6 +101,22 @@ Kitchen Hub reads calendars through their private iCal links.
   ```json
   { "name": "Holidays", "color": "#857a6e", "url": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics" }
   ```
+
+### School calendar
+
+Most school districts publish their calendar as an iCal link (look for "Subscribe", "iCal" or "Add to calendar" on the district's calendar page). Add it like any other calendar, with `"school": true`:
+
+```json
+{ "name": "School", "color": "#5b9e7a", "url": "https://…/district-calendar.ics", "school": true }
+```
+
+Its events show on the calendar as usual, and days it marks as off ("Student Holiday", "Thanksgiving Break", "Staff Development Day"…) skip the leave-by times set to *Skip on days with no school*. Early release days still count as school days. Surprise closures (storms) usually aren't on the calendar; districts send those by text or email.
+
+If your district only publishes a PDF, list the days off in `config.json` instead, as single dates or ranges, and update it each school year:
+
+```json
+"schoolDaysOff": ["2026-09-07", "2026-11-23..2026-11-27", "2026-12-21..2027-01-01"]
+```
 
 Treat private calendar links like passwords: anyone who has one can read that calendar. `config.json` is never committed to git.
 
@@ -136,7 +153,7 @@ The pointer hides itself when the touchpad isn't in use.
 ### The phone page
 
 - **Notes** for the kitchen, from someone, kept for 1 day, 3 days or a week.
-- **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before.
+- **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before. Tick *Skip on days with no school* (ticked for you when the name says "school") and it stays quiet on big holidays like Thanksgiving and Christmas, plus any days off on your [school calendar](#school-calendar).
 - **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
 - Tap any note, chore, countdown or leave-by time to change it.
 

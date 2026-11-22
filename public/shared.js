@@ -182,6 +182,11 @@ function whenPicker({ select, days, date, hint, today = () => new Date() }) {
   return picker;
 }
 
+// A leave-by time that's skipped on days with no school (older ones: anything with "school" in its name).
+function schoolDeparture(d) {
+  return d.school ?? /school/i.test(d.label);
+}
+
 function personColor(people, name) {
   return (people.find((p) => p.name === name) || {}).color || '#8a8f98';
 }

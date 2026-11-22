@@ -291,8 +291,10 @@ function fitChores() {
 function nextDeparture(d) {
   const dow = d.getDay(), mins = d.getHours() * 60 + d.getMinutes();
   let best = null;
+  const noSchool = (S.calendar.noSchool || []).includes(ymd(d));
   for (const dep of S.departures || []) {
     if (dep.days && dep.days.length && !dep.days.includes(dow)) continue;
+    if (noSchool && schoolDeparture(dep)) continue;
     const [h, m] = dep.time.split(':').map(Number);
     const at = h * 60 + m, left = at - mins;
     if (left < -5) continue; // "Time to go!" stays up for 5 minutes, then it's gone
