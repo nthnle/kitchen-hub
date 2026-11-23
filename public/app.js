@@ -821,7 +821,7 @@ document.getElementById('chore-add').addEventListener('submit', (e) => {
   input.value = '';
   caWhen.reset();
   act(() => api.send('POST', '/api/chores', { title, person, ...when }));
-  input.focus(); // ready for the next one
+  document.activeElement?.blur(); // free the keys again: 1–6 switch tabs, N starts the next chore
 });
 
 // ---------- Groceries tab ----------
@@ -1112,8 +1112,9 @@ window.addEventListener('keydown', (e) => {
   if (document.querySelector('dialog[open]')) return; // Esc closes it natively
   if (typing(e.target)) {
     if (e.key === 'Escape') { e.target.blur(); return; }
-    // An empty grocery box lets 1–6 switch tabs, so you're never stuck in it after adding an item.
-    if (!(e.target.id === 'grocery-input' && !e.target.value && /^[1-6]$/.test(e.key))) return;
+    // An empty text box lets 1–6 switch tabs, so you're never stuck in one.
+    const emptyText = e.target.tagName === 'INPUT' && ['text', 'search'].includes(e.target.type) && !e.target.value;
+    if (!(emptyText && /^[1-6]$/.test(e.key))) return;
     e.target.blur();
   }
   // On the Groceries tab, just start typing: a letter goes straight into the "Add an item" box.
