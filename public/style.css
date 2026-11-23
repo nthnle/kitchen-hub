@@ -233,6 +233,8 @@ body.night .toast { opacity: 0.85; }
 .side .card-w { padding: 0.85em 1em; }
 .side h2 { margin-bottom: 0.35em !important; }
 .side .cd-row { padding: 0.3em 0; }
+.groc-card { border: 0; text-align: left; width: 100%; }
+.groc-line { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 1.05em; }
 .home-day .leave { padding: 0.6em 1.3em; }
 .home-day .leave-head { font-size: 1.5em; }
 .home-day .leave-num b { font-size: 3.3em; }
@@ -269,12 +271,38 @@ body.night .toast { opacity: 0.85; }
 .ring-text .muted { font-size: 0.78em; }
 /* Holiday trim (holidays.js): a garland along the top of Home, and the day's greeting */
 .garland { position: fixed; top: 0; left: 0; right: 0; z-index: 3; pointer-events: none; }
-.garland svg { display: block; width: 100%; height: auto; max-height: calc(90 * var(--u)); }
+.garland svg { display: block; width: 100%; height: auto; max-height: calc(100 * var(--u)); }
 .garland-wire { stroke: rgba(43, 38, 34, 0.28); }
 body.dusk .garland { opacity: 0.85; }
 .garland.quiet { opacity: 0.8; }
 body.dusk .garland.quiet { opacity: 0.6; }
 body.dusk .garland-wire { stroke: rgba(242, 233, 222, 0.35); }
+#home-main { height: 100%; }
+/* Corner piles and drifting pieces sit behind the cards, in the gaps around them. */
+.decor-corner { position: fixed; bottom: 0; width: calc(340 * var(--u)); z-index: -1; pointer-events: none; }
+.decor-corner.left { left: calc(14 * var(--u)); }
+.decor-corner.right { right: calc(14 * var(--u)); }
+.decor-corner svg { display: block; width: 100%; height: auto; }
+body.dusk .decor-corner { opacity: 0.85; }
+@media (max-aspect-ratio: 3/2) { .decor-corner { display: none; } }
+.decor-fall { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.decor-fall span { position: absolute; top: 0; width: calc(var(--sz) * var(--u)); height: calc(var(--sz) * var(--u)); opacity: 0.7;
+  will-change: transform; animation: decor-fall linear infinite; }
+.decor-fall svg { display: block; width: 100%; height: 100%; }
+@keyframes decor-fall { from { transform: translate3d(0, -8vh, 0) rotate(0deg); } to { transform: translate3d(var(--dx), 108vh, 0) rotate(var(--rot)); } }
+/* Twinkling jumps between two states (steps), so the garland is only redrawn a few times a second. */
+.decor.moving .tw { animation: twinkle 3s steps(1, end) infinite; }
+.decor.moving .tw1 { animation-delay: -1s; }
+.decor.moving .tw2 { animation-delay: -2s; }
+@keyframes twinkle { 0% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .decor-fall { display: none; } .decor .tw { animation: none !important; } }
+/* Holiday colors on Home */
+#view-home.festive h2, #view-home.festive .bigclock { color: var(--hol); }
+body.dusk #view-home.festive h2, body.dusk #view-home.festive .bigclock { color: color-mix(in srgb, var(--hol) 55%, #F5DCC0); }
+body.dusk .decor .bat { fill: #8E80A8; }
+.hol-ico { display: inline-block; width: 1.3em; height: 1.3em; vertical-align: -0.28em; margin-left: 0.4em; }
+.h-subrow .hol-ico { margin-left: 0; }
+.hol-ico svg { display: block; width: 100%; height: 100%; }
 .h-subrow { display: flex; align-items: center; gap: 0.7em; flex-wrap: wrap; }
 .holiday-chip { display: inline-block; padding: 0.15em 0.75em; border-radius: 999px; font-family: Outfit, sans-serif; font-size: 0.82em; font-weight: 600;
   color: var(--hc); background: color-mix(in srgb, var(--hc) 14%, var(--panel)); }

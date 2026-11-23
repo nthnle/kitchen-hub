@@ -2,11 +2,11 @@
 
 A family calendar, chore chart, grocery list, notes board and photo frame for a screen in your kitchen — plus one-click buttons for your streaming services. It runs on any Windows PC, everyone edits it from their phone, and everything stays on your home network.
 
-![Kitchen Hub during the day: today's timeline, a leave-by countdown, chores and the week ahead](docs/screenshots/day.png)
+![Kitchen Hub during the day: today's timeline, a leave-by countdown, chores, the grocery list and the week ahead, dressed for Thanksgiving](docs/screenshots/day.png)
 
 ## What it does
 
-- **Changes with the time of day.** Mornings show a big clock, weather tips ("Cool start — bring a jacket") and a countdown to when you need to leave. Daytime shows today as a timeline. Evenings show chores left before bed, tomorrow's plan and the grocery list. Late at night it dims to a quiet clock, and after midnight it turns the monitor off.
+- **Changes with the time of day.** Mornings show a big clock, weather tips ("Cool start — bring a jacket") and a countdown to when you need to leave. Daytime shows today as a timeline, with what's left on the grocery list. Evenings show chores left before bed, tomorrow's plan and the grocery list. Late at night it dims to a quiet clock, and after midnight it turns the monitor off.
 - **Calendar.** Reads your Google or iCloud calendars (and US holidays). Click an event for its time, place and notes. Events titled `Sam: Soccer` show in Sam's color.
 - **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars. A one-time chore nobody finished carries over to the next day, marked "from Sat", until someone checks it off.
 - **Trash night.** Set your pickup days and "Put out the trash" shows up as a chore the evening before.
@@ -17,7 +17,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
-- **Dressed for the holidays.** A garland along the top of Home in the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, plus a greeting on the day. On New Year's Eve the night screen counts down to midnight. The rest of the year, a thinner garland follows the seasons: blossoms, suns and lemons, acorns, snowflakes.
+- **Dressed for the holidays.** In the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, Home gets a full garland (pumpkins, bats and candy corn; lights, ornaments and stars…), a little pile in each bottom corner (a turkey with pumpkins, presents, fireworks, lanterns…), headings and clock in the holiday's color, a few leaves, snowflakes or hearts drifting down behind the cards, and a greeting on the day. On New Year's Eve the night screen counts down to midnight. The rest of the year, a thinner garland follows the seasons: blossoms, suns and lemons, acorns, snowflakes.
 
 | Morning | Evening (after sunset) |
 | --- | --- |
@@ -86,6 +86,7 @@ Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`
 | `schoolDaysOff` | Days with no school, for leave-by times set to skip them: dates or ranges like `"2026-11-23..2026-11-27"`. Only needed if your district has no calendar link (see [School calendar](#school-calendar)). |
 | `holidayCountdowns` | Calendar events that get a countdown automatically, by exact title. Defaults to New Year's Day, Valentine's Day, Easter Sunday, Mother's Day, Memorial Day, Father's Day, Independence Day, Labor Day, Halloween, Thanksgiving Day and Christmas Day (as named in Google's US holidays calendar). Give your own list, or `false` for none. |
 | `holidayDecor` | Holiday garlands and greetings on Home, the New Year's Eve countdown (the monitor stays on until 12:30 that night) and the Lunar New Year countdown. `false` turns them all off, seasonal garlands included. |
+| `holidayMotion` | The twinkling lights and the pieces drifting down behind the cards. `false` keeps the decorations but holds them still. |
 | `seasonDecor` | The thin seasonal garland between holidays. `false` keeps only the holiday ones. |
 | `modes` | When each Home screen starts: `{"morning": "6:00", "weekendMorning": "8:00", "day": "10:00", "evening": "17:00", "night": "22:00"}` (the defaults). |
 | `services` | The buttons on the Watch tab. Add, remove or reorder freely. |
@@ -129,7 +130,7 @@ Treat private calendar links like passwords: anyone who has one can read that ca
 | Time | Home shows |
 | --- | --- |
 | **Morning** (6–10 AM; 8–10 on weekends) | Big clock, weather tips, the leave-by countdown, today's plan, notes and chores. |
-| **Day** (10 AM–5 PM) | Today as a timeline with a "now" line, the chores still left, notes, countdowns and the week ahead. The slideshow starts here when the screen is left alone. |
+| **Day** (10 AM–5 PM) | Today as a timeline with a "now" line, the chores still left, notes, what's on the grocery list, countdowns and the week ahead. The slideshow starts here when the screen is left alone. |
 | **Evening** (5–10 PM) | Chores left before bed, tomorrow's plan and weather, and the grocery list. |
 | **Late night** (10 PM until morning) | A dim clock with tomorrow's first plans. After `screenOffAt` the monitor turns off. |
 
@@ -198,7 +199,7 @@ npm start                            # http://localhost:8080 and /phone
 | `public/index.html`, `public/app.js` | The kitchen screen: time-of-day Home screens, tabs, slideshow, keyboard handling. |
 | `public/phone.html`, `public/phone.js` | The phone editor. |
 | `public/shared.js` | Helpers used by both pages (DOM builder, countdowns, alert banners). |
-| `public/holidays.js` | Holiday dates (including Easter, Thanksgiving and Lunar New Year), seasons, and the garland drawings. |
+| `public/holidays.js` | Holiday dates (including Easter, Thanksgiving and Lunar New Year), seasons, and the drawings for the garlands, corner piles and drifting pieces. |
 | `public/style.css` | All styles; colors are CSS variables, swapped for the dusk theme. |
 | `scripts/setup.ps1` | One-time Windows setup (run as administrator). |
 | `scripts/start-kiosk.ps1` | Runs at sign-in: keeps the server running and opens Edge full screen. |

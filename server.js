@@ -303,6 +303,7 @@ app.get('/api/state', (req, res) => {
     countdownDays: config.showCountdownsWithinDays ?? 60,
     holidayDecor: config.holidayDecor !== false,
     seasonDecor: config.seasonDecor !== false,
+    holidayMotion: config.holidayMotion !== false,
     notes: state.notes.filter((n) => new Date(n.expires).getTime() > Date.now()),
     alerts: alertsCache.alerts,
     photos: listPhotos(),

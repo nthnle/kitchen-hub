@@ -224,6 +224,14 @@ function countdownCard(max = 3) {
       el('div', {}, el('div', { class: 'cd-title' }, c.title), el('div', { class: 'muted small' }, fmtShortDate(c.when))),
       el('div', { class: 'cd-days' }, daysLabel(c.days)))));
 }
+// What's still on the grocery list, as one short card for the day screen; click it to open the list.
+function groceryCard() {
+  const left = S.grocery.filter((g) => !g.done);
+  if (!left.length) return null;
+  return el('button', { class: 'card-w groc-card', onclick: () => showView('grocery') },
+    el('div', { class: 'tl-top' }, el('h2', {}, 'Grocery list'), el('span', { class: 'muted' }, `${left.length} to get`)),
+    el('div', { class: 'groc-line' }, left.map((g) => g.text).join(' · ')));
+}
 // Your chores plus the trash nights from config.json.
 const allChores = () => [...S.chores, ...(S.trash || [])];
 // "from Sat" on a chore carried over from an earlier day.
@@ -269,7 +277,12 @@ function choresCard() {
 // Hide chores (from whoever has the most showing) until the Home column fits, adding "+N more".
 function fitChores() {
   const card = document.querySelector('#view-home .chores-home');
-  if (!card) return;
+  if (!card) {
+    // No chores card: still leave out cards at the bottom of the side column rather than cut one in half.
+    const side = document.querySelector('#view-home .side');
+    for (let next = side && side.lastElementChild; next && next !== side.firstElementChild && side.scrollHeight > side.clientHeight + 1; next = next.previousElementSibling) next.style.display = 'none';
+    return;
+  }
   const col = card.parentElement;
   const overflowing = () => col.scrollHeight > col.clientHeight + 1 || card.scrollHeight > card.clientHeight + 1;
   const groups = [...card.querySelectorAll('.chore-group')];
@@ -480,18 +493,18 @@ function homeDay(d) {
     return el('div', { class: 'home-day' },
       el('header', { class: 'h-head' },
         el('div', {}, el('div', { class: 'h-dayname' }, d.toLocaleDateString([], { weekday: 'long' })),
-          el('div', { class: 'h-sub h-subrow' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }), holidayChip(d))),
+          el('div', { class: 'h-sub h-subrow' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }), holidayIcon(d), holidayChip(d))),
         el('div', { class: 'h-right' }, headWeather(d, out), bigClock(d, 'clock-m'))),
       banner,
       el('div', { class: 'day-grid' }, choreBoard(),
-        el('div', { class: 'side' }, el('div', { class: 'notes' }, notesNodes()), todayCard(d), countdownCard(banner ? 1 : 2))),
+        el('div', { class: 'side' }, el('div', { class: 'notes' }, notesNodes()), todayCard(d), groceryCard(), countdownCard(banner ? 1 : 2))),
       weekStrip(d));
   }
   const { allDay, body } = timeline(d);
   return el('div', { class: 'home-day' },
     el('header', { class: 'h-head' },
       el('div', {}, el('div', { class: 'h-dayname' }, d.toLocaleDateString([], { weekday: 'long' })),
-        el('div', { class: 'h-sub h-subrow' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }), holidayChip(d))),
+        el('div', { class: 'h-sub h-subrow' }, d.toLocaleDateString([], { month: 'long', day: 'numeric' }), holidayIcon(d), holidayChip(d))),
       el('div', { class: 'h-right' }, headWeather(d, out), bigClock(d, 'clock-m'))),
     banner,
     el('div', { class: 'day-grid' },
@@ -499,7 +512,7 @@ function homeDay(d) {
         el('div', { class: 'tl-top' }, el('h2', {}, 'Today'), el('span', { class: 'muted' }, nextUp(d))),
         allDay.length ? el('div', { class: 'allday' }, allDay.map((e) => el('button', { class: 'allday-chip', ...eventAttrs(e), style: `--c:${e.color || '#C2502A'}` }, e.title))) : null,
         body),
-      el('div', { class: 'side' }, el('div', { class: 'notes' }, notesNodes()), choresCard(), countdownCard(banner ? 1 : 2))),
+      el('div', { class: 'side' }, el('div', { class: 'notes' }, notesNodes()), choresCard(), groceryCard(), countdownCard(banner ? 1 : 2))),
     weekStrip(d));
 }
 
@@ -518,7 +531,7 @@ function homeMorning(d) {
   const c = wx && wx.cur;
   return el('div', { class: 'home-morning' },
     el('div', { class: 'col' },
-      el('div', { class: 'greet' }, greetLine(d, 'Good morning'), bigClock(d, 'clock-xl'), el('span', { class: 'h-sub' }, fmtLongDate(d))),
+      el('div', { class: 'greet' }, greetLine(d, 'Good morning'), bigClock(d, 'clock-xl'), el('span', { class: 'h-sub' }, fmtLongDate(d), holidayIcon(d))),
       el('section', { class: 'card-w wx-card' },
         c ? el('div', { class: 'wx-now' }, icon(wxKind(c.weather_code), 'wx-big'),
           el('div', {}, el('div', { class: 'wx-temp-l' }, `${Math.round(c.temperature_2m)}°`),
@@ -549,7 +562,7 @@ function homeEvening(d) {
   return el('div', { class: 'home-evening' },
     el('header', { class: 'h-head' },
       el('div', {}, greetLine(d, 'Good evening'),
-        el('div', { class: 'h-clockline' }, bigClock(d, 'clock-l'), el('span', { class: 'h-sub' }, fmtLongDate(d)))),
+        el('div', { class: 'h-clockline' }, bigClock(d, 'clock-l'), el('span', { class: 'h-sub' }, fmtLongDate(d), holidayIcon(d)))),
       wx ? el('div', { class: 'pill-wx' }, icon(wxKind(wx.cur.weather_code, isDusk(d))),
         el('div', {}, el('b', {}, `${Math.round(wx.cur.temperature_2m)}°`), lowTonight != null ? el('span', { class: 'muted' }, `low of ${lowTonight}° tonight`) : null,
           el('span', { class: 'muted' }, nextSun(d)))) : null),
@@ -627,13 +640,34 @@ function nyeLine(d, where) {
   const t = h ? `${h} hr ${m} min` : `${m} minute${m === 1 ? '' : 's'}`;
   return el('div', { class: 'nye-line' }, `${t} until ${d.getFullYear() + 1}`);
 }
-// The garland goes on every Home screen except late night (where only New Year's Eve gets it).
-// Between holidays, a thinner one for the season.
-function homeGarland(d, mode) {
+// A small drawing of the holiday next to the date while its decorations are up.
+function holidayIcon(d) {
   const h = holidayNow(d);
-  if (h) return mode === 'night' && !(h.kind === 'newyear' && newYearsEveNight(d)) ? null : garlandEl(h.kind);
-  if (mode === 'night' || !S || S.holidayDecor === false || S.seasonDecor === false) return null;
-  return garlandEl(seasonOn(d), true);
+  if (!h) return null;
+  const s = el('span', { class: 'hol-ico' });
+  s.innerHTML = holidayIconSvg(h.kind); // fixed drawings from holidays.js
+  return s;
+}
+// The garland goes on every Home screen except late night (where only New Year's Eve gets it).
+// Between holidays, a thinner one for the season. Holidays also get corner piles, holiday-colored
+// headings and (unless holidayMotion is off) twinkling lights and a few pieces drifting down.
+// The trim is only rebuilt when it changes, so the motion doesn't restart every minute.
+function updateDecor(box, d, mode) {
+  const h = holidayNow(d);
+  const night = mode === 'night';
+  let kind = null, quiet = false;
+  if (h) kind = night && !(h.kind === 'newyear' && newYearsEveNight(d)) ? null : h.kind;
+  else if (!night && S.holidayDecor !== false && S.seasonDecor !== false) { kind = seasonOn(d); quiet = true; }
+  const extras = !!kind && !quiet && !night;
+  const motion = !!kind && !quiet && S.holidayMotion !== false;
+  const home = box.parentElement;
+  home.classList.toggle('festive', extras);
+  if (extras) home.style.setProperty('--hol', h.color);
+  const key = `${kind}|${quiet}|${extras}|${motion}`;
+  if (box.dataset.key === key) return;
+  box.dataset.key = key;
+  box.classList.toggle('moving', motion);
+  box.replaceChildren(...(kind ? [garlandEl(kind, quiet)] : []), ...(extras ? cornerEls(kind) : []), ...(extras && motion ? [fallEl(kind)] : []));
 }
 
 // ---------- Home ----------
@@ -668,7 +702,10 @@ function renderHome(force = true) {
   document.body.classList.toggle('night', currentView === 'home' && mode === 'night');
   const box = document.getElementById('view-home');
   const view = { morning: homeMorning, day: homeDay, evening: homeEvening, night: homeNight }[mode](d);
-  box.replaceChildren(...[homeGarland(d, mode), view].filter(Boolean));
+  let main = document.getElementById('home-main');
+  if (!main) box.replaceChildren(el('div', { class: 'decor' }), main = el('div', { id: 'home-main' }));
+  main.replaceChildren(view);
+  updateDecor(box.querySelector('.decor'), d, mode);
   box.dataset.mode = mode;
   fitChores();
 }
