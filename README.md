@@ -17,7 +17,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
-- **Dressed for the holidays.** In the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, Home gets a full garland (pumpkins, bats and candy corn; lights, ornaments and stars…), a little pile in each bottom corner (a turkey with pumpkins, presents, fireworks, lanterns…), headings and clock in the holiday's color, a few leaves, snowflakes or hearts drifting down behind the cards, and a greeting on the day. On New Year's Eve the night screen counts down to midnight. The rest of the year, a thinner garland follows the seasons: blossoms, suns and lemons, acorns, snowflakes.
+- **Dressed for the holidays.** In the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, Home gets a full garland (pumpkins, bats and candy corn; lights, ornaments and stars…), a little pile in each bottom corner (a turkey with pumpkins, presents, fireworks, lanterns…), headings and clock in the holiday's color, a few leaves, snowflakes or hearts drifting down behind the cards, and a greeting on the day. The other tabs get the garland and the holiday colors too. On New Year's Eve the night screen counts down to midnight. The rest of the year, a thinner garland follows the seasons: blossoms, suns and lemons, acorns, snowflakes.
 
 | Morning | Evening (after sunset) |
 | --- | --- |
@@ -204,7 +204,7 @@ npm start                            # http://localhost:8080 and /phone
 | `scripts/setup.ps1` | One-time Windows setup (run as administrator). |
 | `scripts/start-kiosk.ps1` | Runs at sign-in: keeps the server running and opens Edge full screen. |
 
-The screens poll `/api/version` every few seconds and reload `/api/state` when it changes. Changes go through small JSON endpoints (`POST`/`PUT`/`DELETE` on `/api/chores`, `/api/notes`, `/api/countdowns`, `/api/departures`, `/api/grocery`). Add `?at=<date-time>` to the kitchen screen's URL to preview any time of day; previews never turn the monitor off.
+The screens poll `/api/version` every few seconds and reload `/api/state` when it changes. Changes go through small JSON endpoints (`POST`/`PUT`/`DELETE` on `/api/chores`, `/api/notes`, `/api/countdowns`, `/api/departures`, `/api/grocery`). Add `?at=<date-time>` to the kitchen screen's URL to preview any time of day, and `&view=calendar` (or `chores`, `grocery`, `watch`) to open another tab; previews never turn the monitor off.
 
 ## License
 

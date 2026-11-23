@@ -59,7 +59,7 @@ function showView(name) {
   document.querySelectorAll('.tabs button[data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
   document.body.classList.toggle('on-home', name === 'home');
   if (name === 'home') renderHome();
-  else document.body.classList.remove('night');
+  else { document.body.classList.remove('night'); updateDecor(); }
 }
 document.querySelectorAll('.tabs button').forEach((b) =>
   b.addEventListener('click', () => (b.dataset.action === 'frame' ? startFrame(true) : showView(b.dataset.view)))
@@ -648,21 +648,26 @@ function holidayIcon(d) {
   s.innerHTML = holidayIconSvg(h.kind); // fixed drawings from holidays.js
   return s;
 }
-// The garland goes on every Home screen except late night (where only New Year's Eve gets it).
-// Between holidays, a thinner one for the season. Holidays also get corner piles, holiday-colored
-// headings and (unless holidayMotion is off) twinkling lights and a few pieces drifting down.
+// The garland goes across the top of every tab, except Home's late-night clock (where only
+// New Year's Eve gets it). Between holidays, a thinner one for the season. Holidays also get
+// holiday-colored headings and clock, and on Home corner piles and (unless holidayMotion is off)
+// twinkling lights and a few pieces drifting down.
 // The trim is only rebuilt when it changes, so the motion doesn't restart every minute.
-function updateDecor(box, d, mode) {
+function updateDecor() {
+  if (!S) return;
+  const d = now();
+  let box = document.querySelector('body > .decor');
+  if (!box) { box = el('div', { class: 'decor' }); document.body.prepend(box); }
   const h = holidayNow(d);
-  const night = mode === 'night';
+  const night = currentView === 'home' && currentMode() === 'night';
   let kind = null, quiet = false;
   if (h) kind = night && !(h.kind === 'newyear' && newYearsEveNight(d)) ? null : h.kind;
   else if (!night && S.holidayDecor !== false && S.seasonDecor !== false) { kind = seasonOn(d); quiet = true; }
   const extras = !!kind && !quiet && !night;
   const motion = !!kind && !quiet && S.holidayMotion !== false;
-  const home = box.parentElement;
-  home.classList.toggle('festive', extras);
-  if (extras) home.style.setProperty('--hol', h.color);
+  document.body.classList.toggle('festive', extras);
+  document.body.classList.toggle('garlanded', !!kind);
+  if (extras) document.body.style.setProperty('--hol', h.color);
   const key = `${kind}|${quiet}|${extras}|${motion}`;
   if (box.dataset.key === key) return;
   box.dataset.key = key;
@@ -702,10 +707,8 @@ function renderHome(force = true) {
   document.body.classList.toggle('night', currentView === 'home' && mode === 'night');
   const box = document.getElementById('view-home');
   const view = { morning: homeMorning, day: homeDay, evening: homeEvening, night: homeNight }[mode](d);
-  let main = document.getElementById('home-main');
-  if (!main) box.replaceChildren(el('div', { class: 'decor' }), main = el('div', { id: 'home-main' }));
-  main.replaceChildren(view);
-  updateDecor(box.querySelector('.decor'), d, mode);
+  box.replaceChildren(view);
+  updateDecor();
   box.dataset.mode = mode;
   fitChores();
 }
@@ -1170,7 +1173,8 @@ function renderAll() {
 function tickClock() {
   const d = now();
   document.getElementById('clock').textContent = fmtClock(d);
-  document.getElementById('date').textContent = fmtLongDate(d);
+  document.getElementById('date').replaceChildren(fmtLongDate(d), ...[holidayIcon(d)].filter(Boolean));
+  updateDecor(); // the other tabs get the garland too
   document.getElementById('frame-time').textContent = fmtClock(d);
   document.getElementById('frame-date').textContent = fmtLongDate(d);
   applyTheme();
@@ -1204,7 +1208,9 @@ async function load(force) {
 
 tickClock();
 setInterval(tickClock, 10000);
-load(true).then(loadWeather);
+// Add ?view=chores (calendar, grocery, watch) to open another tab, for previews.
+const VIEW = new URLSearchParams(location.search).get("view");
+load(true).then(() => { if (VIEW && document.getElementById(`view-${VIEW}`)) showView(VIEW); tickClock(); }).then(loadWeather);
 setInterval(() => load(false), 5000);
 // Every 30 minutes, or every 2 minutes while the last attempt failed.
 let lastWeatherTry = Date.now();

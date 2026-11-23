@@ -269,7 +269,7 @@ body.night .toast { opacity: 0.85; }
 .ring-text { display: flex; flex-direction: column; flex: 1; line-height: 1.2; }
 .ring-text b { font-size: 1.02em; }
 .ring-text .muted { font-size: 0.78em; }
-/* Holiday trim (holidays.js): a garland along the top of Home, and the day's greeting */
+/* Holiday trim (holidays.js): a garland along the top of every tab, and the day's greeting */
 .garland { position: fixed; top: 0; left: 0; right: 0; z-index: 3; pointer-events: none; }
 .garland svg { display: block; width: 100%; height: auto; max-height: calc(100 * var(--u)); }
 .garland-wire { stroke: rgba(43, 38, 34, 0.28); }
@@ -277,8 +277,10 @@ body.dusk .garland { opacity: 0.85; }
 .garland.quiet { opacity: 0.8; }
 body.dusk .garland.quiet { opacity: 0.6; }
 body.dusk .garland-wire { stroke: rgba(242, 233, 222, 0.35); }
-#home-main { height: 100%; }
-/* Corner piles and drifting pieces sit behind the cards, in the gaps around them. */
+/* The other tabs move their clock down to make room under the garland. */
+body.garlanded:not(.on-home) .top { padding-top: calc(62 * var(--u) + 0.5rem); }
+/* Corner piles and drifting pieces sit behind the cards, in the gaps around them (Home only). */
+body:not(.on-home) .decor-corner, body:not(.on-home) .decor-fall { display: none; }
 .decor-corner { position: fixed; bottom: 0; width: calc(340 * var(--u)); z-index: -1; pointer-events: none; }
 .decor-corner.left { left: calc(14 * var(--u)); }
 .decor-corner.right { right: calc(14 * var(--u)); }
@@ -296,9 +298,9 @@ body.dusk .decor-corner { opacity: 0.85; }
 .decor.moving .tw2 { animation-delay: -2s; }
 @keyframes twinkle { 0% { opacity: 1; } 50% { opacity: 0.45; } }
 @media (prefers-reduced-motion: reduce) { .decor-fall { display: none; } .decor .tw { animation: none !important; } }
-/* Holiday colors on Home */
-#view-home.festive h2, #view-home.festive .bigclock { color: var(--hol); }
-body.dusk #view-home.festive h2, body.dusk #view-home.festive .bigclock { color: color-mix(in srgb, var(--hol) 55%, #F5DCC0); }
+/* Holiday colors: headings and the clock, on every tab */
+body.festive main h2, body.festive .bigclock, body.festive .top .clock { color: var(--hol); }
+body.dusk.festive main h2, body.dusk.festive .bigclock, body.dusk.festive .top .clock { color: color-mix(in srgb, var(--hol) 55%, #F5DCC0); }
 body.dusk .decor .bat { fill: #8E80A8; }
 .hol-ico { display: inline-block; width: 1.3em; height: 1.3em; vertical-align: -0.28em; margin-left: 0.4em; }
 .h-subrow .hol-ico { margin-left: 0; }
