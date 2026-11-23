@@ -64,8 +64,6 @@ function showView(name) {
 document.querySelectorAll('.tabs button').forEach((b) =>
   b.addEventListener('click', () => (b.dataset.action === 'frame' ? startFrame(true) : showView(b.dataset.view)))
 );
-// Opening the Groceries tab puts the cursor in the "Add an item" box, ready to type.
-document.querySelector('.tabs button[data-view="grocery"]').addEventListener('click', () => document.getElementById('grocery-input').focus());
 
 // ---------- modes ----------
 // Morning, day, evening and night each get their own Home screen.
@@ -1101,7 +1099,7 @@ setInterval(() => {
 }, 15000);
 
 // ---------- keyboard (the kitchen PC has a keyboard and touchpad) ----------
-// 1–6 switch tabs, H or Esc goes Home, G jumps to the grocery box, Ctrl+Z undoes.
+// 1–6 switch tabs, H or Esc goes Home, G jumps to the grocery box (or just type on the Groceries tab), Ctrl+Z undoes.
 const TAB_KEYS = { 1: 'home', 2: 'calendar', 3: 'chores', 4: 'grocery', 5: 'watch' };
 const typing = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 window.addEventListener('keydown', (e) => {
@@ -1112,12 +1110,18 @@ window.addEventListener('keydown', (e) => {
   if (!document.getElementById('frame').hidden) { e.preventDefault(); stopFrame(); return; }
   if (currentView === 'home' && document.getElementById('view-home').dataset.mode === 'night') { e.preventDefault(); wokeAt = Date.now(); renderHome(); return; }
   if (document.querySelector('dialog[open]')) return; // Esc closes it natively
-  if (typing(e.target)) { if (e.key === 'Escape') e.target.blur(); return; }
+  if (typing(e.target)) {
+    if (e.key === 'Escape') { e.target.blur(); return; }
+    // An empty grocery box lets 1–6 switch tabs, so you're never stuck in it after adding an item.
+    if (!(e.target.id === 'grocery-input' && !e.target.value && /^[1-6]$/.test(e.key))) return;
+    e.target.blur();
+  }
+  // On the Groceries tab, just start typing: a letter goes straight into the "Add an item" box.
+  if (currentView === 'grocery' && e.key.length === 1 && /\p{L}/u.test(e.key)) { document.getElementById('grocery-input').focus(); return; }
   const k = e.key.toLowerCase();
   if (TAB_KEYS[k]) {
     e.preventDefault();
     showView(TAB_KEYS[k]);
-    if (TAB_KEYS[k] === 'grocery') document.getElementById('grocery-input').focus();
   }
   else if (k === '6') { e.preventDefault(); startFrame(true); }
   else if (k === 'h' || k === 'escape') { e.preventDefault(); showView('home'); }

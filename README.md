@@ -142,9 +142,10 @@ From sunset to sunrise every tab uses warm, dark colors. When the screen is left
 
 | Key | Does |
 | --- | --- |
-| `1`–`6` | Home, Week, Chores, Groceries, Watch, Photos |
-| `H` or `Esc` | Back to Home |
+| `1`–`6` | Home, Week, Chores, Groceries, Watch, Photos (also from an empty grocery box) |
+| `H` or `Esc` | Back to Home (on Groceries, `Esc`: letters type there) |
 | `G` | Jump to the grocery box |
+| Any letter (on Groceries) | Start typing a new item |
 | `N` (on Chores) | Start a new chore |
 | `Ctrl+Z` | Undo the last check-off or removed note |
 | Any key | Stop the slideshow, or wake the night screen |
