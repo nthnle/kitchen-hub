@@ -129,7 +129,7 @@ Treat private calendar links like passwords: anyone who has one can read that ca
 
 | Time | Home shows |
 | --- | --- |
-| **Morning** (6–10 AM; 8–10 on weekends) | Big clock, weather tips, the leave-by countdown, today's plan, notes and chores. |
+| **Morning** (6–10 AM; 8–10 on weekends) | Big clock, weather tips, the leave-by countdown, today's plan, notes, chores and what's on the grocery list. |
 | **Day** (10 AM–5 PM) | Today as a timeline with a "now" line, the chores still left, notes, what's on the grocery list, countdowns and the week ahead. The slideshow starts here when the screen is left alone. |
 | **Evening** (5–10 PM) | Chores left before bed, tomorrow's plan and weather, and the grocery list. |
 | **Late night** (10 PM until morning) | A dim clock with tomorrow's first plans. After `screenOffAt` the monitor turns off. |

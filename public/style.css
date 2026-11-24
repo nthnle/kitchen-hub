@@ -289,6 +289,8 @@ body.dusk .garland.quiet { opacity: 0.6; }
 body.dusk .garland-wire { stroke: rgba(242, 233, 222, 0.35); }
 /* The other tabs move their clock down to make room under the garland. */
 body.garlanded:not(.on-home) .top { padding-top: calc(62 * var(--u) + 0.5rem); }
+/* On Home (no header), a weather alert bar steps down below the garland instead. */
+body.garlanded.on-home .alerts:not(:empty) { padding-top: calc(58 * var(--u)); }
 /* Corner piles and drifting pieces sit behind the cards, in the gaps around them (Home only). */
 body:not(.on-home) .decor-corner, body:not(.on-home) .decor-fall { display: none; }
 .decor-corner { position: fixed; bottom: 0; width: calc(340 * var(--u)); z-index: -1; pointer-events: none; }
@@ -593,3 +595,9 @@ form [hidden] { display: none !important; }
 .photo-view .row2 { margin-top: 0.6rem; }
 button.danger { color: #B42318; border-color: currentColor; }
 .thumb .x { position: absolute; top: 2px; right: 2px; background: rgb(0 0 0 / 0.55); color: #fff; border-radius: 50%; width: 1.8rem; height: 1.8rem; min-width: 0; min-height: 0; padding: 0; }
+
+/* Scrolling and fitted areas clip anything past their edge, the keyboard focus ring included:
+   leave it a few pixels of room (the negative margin keeps the layout where it was). */
+.grocery-wrap { padding: 6px; }
+.card-scroll, .side, .home-morning .col, .day-events { padding: 6px; margin: -6px; }
+.board-cols { padding: 6px; margin: calc(0.6em - 6px) -6px -6px; }

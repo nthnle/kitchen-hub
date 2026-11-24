@@ -325,6 +325,13 @@ function fitChores() {
   }
   // Last resort: leave out the cards below the chores rather than show them cut in half.
   for (let next = col.lastElementChild; next && next !== card && overflowing(); next = next.previousElementSibling) next.style.display = 'none';
+  // Then someone's only chore, from the bottom up (their "0 of 1 done" line still says it).
+  for (const c of [...card.querySelectorAll('.mini-chore:not([hidden])')].reverse()) {
+    if (!overflowing()) break;
+    c.hidden = true;
+  }
+  // And finally the cards above the chores (but not the notes).
+  for (let prev = card.previousElementSibling; prev && !prev.classList.contains('notes') && overflowing(); prev = prev.previousElementSibling) prev.style.display = 'none';
 }
 
 // ---------- leave-by countdown ----------
@@ -558,7 +565,8 @@ function homeMorning(d) {
             el('div', { class: 'muted' }, `up to ${Math.round(wx.daily.temperature_2m_max[0])}° today · ${WX_WORD(wx.daily.weather_code[0])}`),
             el('div', { class: 'muted' }, nextSun(d))))
           : el('p', { class: 'muted' }, 'Weather is loading…'),
-        adviceList(weatherAdvice(d, 'morning')))),
+        adviceList(weatherAdvice(d, 'morning'))),
+      groceryCard()),
     ...(quietDay(d) ? [
       el('div', { class: 'col' }, departureBanner('morning'), choreBoard()),
       el('div', { class: 'col' }, el('div', { class: 'notes' }, notesNodes()), todayCard(d), countdownCard()),
@@ -796,7 +804,8 @@ function renderAlerts() {
   if (sig === alertSig) return; // unchanged: don't collapse an open alert
   alertSig = sig;
   document.getElementById('alerts').replaceChildren(...alertBanners(active));
-  if (active.some(isSevere)) { stopFrame(); renderHome(); }
+  if (active.some(isSevere)) stopFrame();
+  if (currentView === 'home') renderHome(); // the bar takes room from Home: fit its cards again
 }
 const severeAlertActive = () => activeAlerts(S && S.alerts).some(isSevere);
 
