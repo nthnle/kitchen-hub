@@ -408,7 +408,9 @@ body.dusk .holiday-chip { background: color-mix(in srgb, var(--hc) 30%, var(--pa
 /* "from Sat" on a chore carried over from an earlier day. Not struck through once done. */
 .late-tag { display: inline-block; margin-left: 0.5em; padding: 0.05em 0.5em; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-size: 0.78em; font-weight: 600; white-space: nowrap; vertical-align: 0.08em; }
 .done .late-tag { display: none; }
-.board-chore .late-tag, .mini-chore .late-tag { display: table; margin: 0.2em 0 0; }
+.board-chore .late-tag, .mini-chore .late-tag { display: block; width: fit-content; max-width: 100%; margin: 0.2em 0 0; white-space: normal; border-radius: 0.5em; }
+/* Narrow columns: the text and its tag stay inside the chore box. */
+.board-chore > span:last-child, .mini-chore > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .bed-check { width: 1.6em; height: 1.6em; border-radius: 50%; border: 3px solid var(--check-border); flex: none; }
 .all-done { margin: 0.4em 0; padding: 0.7em; border-radius: 0.8em; background: #E6F3EA; color: #2F7A55; font-weight: 600; text-align: center; }
 .stars-today { margin-top: auto; padding-top: 0.8em; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 0.3em; }
