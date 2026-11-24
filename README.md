@@ -11,7 +11,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars. A one-time chore nobody finished carries over to the next day, marked "from Sat", until someone checks it off.
 - **Trash night.** Set your pickup days and "Put out the trash" shows up as a chore the evening before.
 - **Groceries.** A shared list with one-click "Add again" buttons for things you buy often.
-- **Notes.** Post a note from your phone ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
+- **Notes.** Post a note from your phone, or with *+ Add a note* on the kitchen screen ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
@@ -146,7 +146,7 @@ From sunset to sunrise every tab uses warm, dark colors. When the screen is left
 | `H` or `Esc` | Back to Home (on Groceries, `Esc`: letters type there) |
 | `G` | Jump to the grocery box |
 | Any letter (on Groceries) | Start typing a new item |
-| `N` (on Chores) | Start a new chore |
+| `N` | Post a new note (on Chores: start a new chore) |
 | `Ctrl+Z` | Undo the last check-off or removed note |
 | Any key | Stop the slideshow, or wake the night screen |
 

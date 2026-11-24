@@ -101,6 +101,16 @@ main { grid-area: main; position: relative; overflow: hidden; padding: 0.5rem 2r
 .note-meta { font-size: 0.78em; color: var(--note-ink); margin-top: 0.2em; }
 .note-x { border: 0; background: none; color: var(--note-ink); width: 2.2em; height: 2.2em; display: grid; place-items: center; flex: none; border-radius: 0.5em; padding: 0; }
 .note-x .ico { font-size: 0.95em; }
+.note-add {
+  border: 1.5px dashed color-mix(in srgb, var(--muted) 45%, transparent); background: none; color: var(--muted);
+  border-radius: 0.8em; padding: 0.55em 0.8em; text-align: left; font-size: 0.95em;
+}
+/* New-note pop-up (reuses the event pop-up's look). */
+.ev-dialog.note-dialog form { flex-direction: column; align-items: stretch; gap: 0.8rem; margin: 0; }
+.note-dialog h2 { margin: 0; font-size: 1.5rem; color: var(--ink); text-align: left; }
+.note-dialog input, .note-dialog select { padding: 0.7rem 0.9rem; border-radius: 12px; border: 1px solid var(--input-border); background: var(--panel); min-width: 0; }
+.na-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.na-actions { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.4rem; }
 
 /* countdown rows */
 .cd-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; padding: 0.45em 0; border-top: 1px solid var(--line); }

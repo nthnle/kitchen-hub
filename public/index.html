@@ -85,6 +85,25 @@
   <div id="status-badge" class="status-badge" role="status" hidden></div>
   <div id="toast" class="toast" role="status" hidden></div>
   <dialog id="event-dialog" class="ev-dialog"></dialog>
+  <dialog id="note-dialog" class="ev-dialog note-dialog" aria-labelledby="na-heading">
+    <form id="note-add" autocomplete="off">
+      <h2 id="na-heading">New note</h2>
+      <input id="na-text" placeholder="e.g. Dentist forms are on the counter" maxlength="200" aria-label="Note">
+      <div class="na-row">
+        <select id="na-from" aria-label="From"></select>
+        <select id="na-days" aria-label="Keep for">
+          <option value="1">Keep 1 day</option>
+          <option value="3">Keep 3 days</option>
+          <option value="7">Keep 1 week</option>
+        </select>
+      </div>
+      <div class="na-actions">
+        <button class="ev-close">Post note</button>
+        <button type="button" id="na-cancel" class="ghost">Cancel</button>
+        <span class="muted small">or press Esc</span>
+      </div>
+    </form>
+  </dialog>
 
   <div id="frame" class="frame" hidden>
     <div class="slides"></div>

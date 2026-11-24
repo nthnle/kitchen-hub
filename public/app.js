@@ -199,8 +199,30 @@ function notesNodes() {
       el('div', { class: 'note-body' },
         el('div', { class: 'note-text' }, n.text),
         el('div', { class: 'note-meta' }, [n.from, timeAgo(n.created)].filter(Boolean).join(' · '))),
-      el('button', { class: 'note-x', 'aria-label': 'Remove note', onclick: () => removeNote(n) }, icon('x'))));
+      el('button', { class: 'note-x', 'aria-label': 'Remove note', onclick: () => removeNote(n) }, icon('x'))))
+    .concat(el('button', { class: 'note-add', onclick: openNoteDialog }, '+ Add a note'));
 }
+// Post a note from the kitchen screen (the "+ Add a note" button, or press N).
+const noteDialog = document.getElementById('note-dialog');
+function openNoteDialog() {
+  const from = document.getElementById('na-from');
+  from.replaceChildren(el('option', { value: '' }, 'From: nobody'), ...S.people.map((p) => el('option', { value: p.name }, `From: ${p.name}`)));
+  document.getElementById('note-add').reset();
+  noteDialog.showModal();
+  document.getElementById('na-text').focus();
+}
+document.getElementById('note-add').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('na-text');
+  const text = input.value.trim();
+  if (!text) return input.focus();
+  noteDialog.close();
+  act(() => api.send('POST', '/api/notes', {
+    text, from: document.getElementById('na-from').value, days: Number(document.getElementById('na-days').value),
+  }));
+});
+document.getElementById('na-cancel').addEventListener('click', () => noteDialog.close());
+noteDialog.addEventListener('click', (e) => { if (e.target === noteDialog) noteDialog.close(); }); // tap outside to cancel
 // Your own countdowns plus the big holidays from the calendar (yours win if both land on the same day).
 function countdownList(max = 5) {
   const mine = upcomingCountdowns(S.countdowns, now());
@@ -1102,7 +1124,8 @@ setInterval(() => {
 }, 15000);
 
 // ---------- keyboard (the kitchen PC has a keyboard and touchpad) ----------
-// 1–6 switch tabs, H or Esc goes Home, G jumps to the grocery box (or just type on the Groceries tab), Ctrl+Z undoes.
+// 1–6 switch tabs, H or Esc goes Home, G jumps to the grocery box (or just type on the Groceries tab),
+// N starts a new note (a new chore on the Chores tab), Ctrl+Z undoes.
 const TAB_KEYS = { 1: 'home', 2: 'calendar', 3: 'chores', 4: 'grocery', 5: 'watch' };
 const typing = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 window.addEventListener('keydown', (e) => {
@@ -1131,6 +1154,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'h' || k === 'escape') { e.preventDefault(); showView('home'); }
   else if (k === 'g') { e.preventDefault(); showView('grocery'); document.getElementById('grocery-input').focus(); }
   else if (k === 'n' && currentView === 'chores') { e.preventDefault(); document.getElementById('ca-title').focus(); }
+  else if (k === 'n' && S) { e.preventDefault(); openNoteDialog(); }
 });
 document.addEventListener('pointerdown', enterFullscreen);
 
