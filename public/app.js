@@ -566,10 +566,10 @@ function homeEvening(d) {
           el('span', { class: 'muted' }, nextSun(d)))) : null),
     el('div', { class: 'eve-grid' },
       el('section', { class: 'card-w' }, el('h2', {}, 'Before bed'),
-        todays.length ? todays.map((ch) => el('button', { class: 'bed-row', onclick: () => toggleChore(ch) },
+        todays.length ? el('div', { class: 'card-scroll bed-list' }, todays.map((ch) => el('button', { class: 'bed-row', onclick: () => toggleChore(ch) },
           el('span', { class: 'avatar sm', style: `--c:${personColor(S.people, ch.person)}` }, (ch.person || '★')[0]),
           el('span', { class: 'bed-text' }, el('b', {}, ch.title, lateTag(ch)), el('span', { class: 'muted' }, ch.person || 'Everyone')),
-          el('span', { class: 'bed-check' })))
+          el('span', { class: 'bed-check' }))))
           : el('p', { class: 'all-done' }, 'All of today’s chores are done'),
         Object.keys(starsToday).length ? el('div', { class: 'stars-today' }, el('span', { class: 'muted' }, 'Stars earned today'),
           el('div', {}, Object.entries(starsToday).map(([p, n]) => el('span', {}, `${p} ★${n}`)))) : null),
@@ -583,7 +583,7 @@ function homeEvening(d) {
         el('div', { class: 'notes' }, notesNodes())),
       el('section', { class: 'card-w' },
         el('div', { class: 'tl-top' }, el('h2', {}, 'Grocery list'), el('span', { class: 'muted' }, `${S.grocery.filter((g) => !g.done).length} to get`)),
-        S.grocery.length ? el('div', { class: 'groc' }, S.grocery.map((g) => el('button', { class: `groc-row${g.done ? ' done' : ''}`, onclick: () => toggleGrocery(g) },
+        S.grocery.length ? el('div', { class: 'groc card-scroll' }, S.grocery.map((g) => el('button', { class: `groc-row${g.done ? ' done' : ''}`, onclick: () => toggleGrocery(g) },
           el('span', { class: 'groc-check' }, g.done ? icon('check') : null), el('span', {}, g.text))))
           : el('p', { class: 'empty' }, 'The list is empty'),
         quickAdd(6),
@@ -705,7 +705,10 @@ function renderHome(force = true) {
   document.body.classList.toggle('night', currentView === 'home' && mode === 'night');
   const box = document.getElementById('view-home');
   const view = { morning: homeMorning, day: homeDay, evening: homeEvening, night: homeNight }[mode](d);
+  // Home redraws every minute; keep scrolled lists where they were.
+  const scrolled = [...box.querySelectorAll('.card-scroll')].map((e) => [e.className, e.scrollTop]);
   box.replaceChildren(view);
+  for (const [cls, top] of scrolled) { const e = box.getElementsByClassName(cls)[0]; if (e) e.scrollTop = top; }
   updateDecor();
   box.dataset.mode = mode;
   fitChores();

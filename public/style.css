@@ -385,7 +385,10 @@ body.dusk .holiday-chip { background: color-mix(in srgb, var(--hc) 30%, var(--pa
 .pill-wx .muted { display: block; font-size: 0.8em; }
 .eve-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 23.6em minmax(0, 1fr) 23.6em; gap: 1.1em; }
 .eve-grid .card-w { overflow: hidden; gap: 0.6em; }
-.bed-row { display: flex; align-items: center; gap: 0.7em; width: 100%; min-height: 3.2em; padding: 0.4em 0.7em; border: 2px solid var(--line); border-radius: 0.8em; background: var(--panel); text-align: left; }
+/* A list that can outgrow its card scrolls inside it (touchpad or wheel); the card keeps its size. */
+.card-scroll { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--check-border) transparent; }
+.bed-list { display: flex; flex-direction: column; gap: 0.6em; padding-right: 0.3em; }
+.bed-row { flex: none; display: flex; align-items: center; gap: 0.7em; width: 100%; min-height: 3.2em; padding: 0.4em 0.7em; border: 2px solid var(--line); border-radius: 0.8em; background: var(--panel); text-align: left; }
 .avatar.sm { width: 2em; height: 2em; font-size: 0.95em; }
 .bed-text { display: flex; flex-direction: column; flex: 1; line-height: 1.25; }
 .bed-text b { font-size: 1.05em; font-weight: 500; }
@@ -402,7 +405,8 @@ body.dusk .holiday-chip { background: color-mix(in srgb, var(--hc) 30%, var(--pa
 .tmr-ev { display: flex; align-items: center; gap: 0.9em; padding: 0.75em 1em; border-radius: 0.9em; background: color-mix(in srgb, var(--c) 13%, var(--mix)); }
 .tmr-time { width: 5em; flex: none; color: var(--ink2); }
 .tmr-ev b { font-size: 1.2em; }
-.groc { display: flex; flex-direction: column; overflow: hidden; }
+.groc { display: flex; flex-direction: column; }
+.groc-row { flex: none; }
 .groc-row { display: flex; align-items: center; gap: 0.7em; min-height: 2.4em; border: 0; border-bottom: 1px solid var(--track); background: none; text-align: left; font-size: 1.05em; padding: 0.2em 0; }
 .groc-check { width: 1.3em; height: 1.3em; border-radius: 50%; border: 3px solid var(--check-border); flex: none; display: grid; place-items: center; }
 .groc-row.done { color: var(--done-ink); text-decoration: line-through; }
