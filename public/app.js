@@ -1187,14 +1187,17 @@ wakeCursor();
 
 // ---------- status ----------
 // A quiet note in the corner, only when something has stopped updating.
-let lastLoadOk = Date.now(), lastWeatherOk = 0;
+let lastLoadOk = Date.now(), lastWeatherOk = 0, calFailingSince = 0;
 const startedAt = Date.now();
 function renderStatus() {
   const msgs = [];
   if (Date.now() - lastLoadOk > 60e3) msgs.push('Can’t reach the Kitchen Hub server');
   else if (S) {
     const f = S.calendar.fetchedAt && new Date(S.calendar.fetchedAt);
-    if (S.calendar.errors.length) msgs.push('Calendar couldn’t update');
+    // The server retries every minute, so only speak up if it's still failing after 5 minutes.
+    if (!S.calendar.errors.length) calFailingSince = 0;
+    else if (!calFailingSince) calFailingSince = Date.now();
+    if (calFailingSince && Date.now() - calFailingSince > 5 * 60e3) msgs.push('Calendar couldn’t update');
     else if (f && Date.now() - f > 40 * 60e3) msgs.push(`Calendar last updated ${fmtClock(f)}`);
     if (!weatherOk && Date.now() - Math.max(lastWeatherOk, startedAt) > 15 * 60e3) {
       msgs.push(lastWeatherOk ? `Weather last updated ${fmtClock(new Date(lastWeatherOk))}` : 'Weather unavailable');

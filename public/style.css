@@ -506,6 +506,8 @@ body.dusk .toast-key { color: #5C5046; }
 .status-badge[hidden] { display: none; }
 body.dusk .status-badge { background: #3D2F17; color: #F0C070; }
 body.night .status-badge { opacity: 0.6; }
+/* The note shares the bottom-left corner with the holiday pile; the pile steps aside while it shows. */
+body:has(.status-badge:not([hidden])) .decor-corner.left { display: none; }
 
 /* quick-add grocery buttons */
 .quick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45em; margin: 0.6em 0; }
