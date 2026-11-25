@@ -15,6 +15,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
 - **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
+- **On your phone, anywhere.** The phone page has the same Today, Calendar, Chores and Groceries as the kitchen screen, with the editors under *More*. It keeps the last copy on the phone, so the grocery list still works in a store with no signal and syncs what you check off once you’re back online.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
 - **Dressed for the holidays.** In the week before New Year's, Lunar New Year (Tết), Valentine's Day, Easter, the 4th of July, Halloween, Thanksgiving and all of December, Home gets a full garland (pumpkins, bats and candy corn; lights, ornaments and stars…), a little pile in each bottom corner (a turkey with pumpkins, presents, fireworks, lanterns…), headings and clock in the holiday's color, a few leaves, snowflakes or hearts drifting down behind the cards, and a greeting on the day. The other tabs get the garland and the holiday colors too. On New Year's Eve the night screen counts down to midnight. The rest of the year, a thinner garland follows the seasons: blossoms, suns and lemons, acorns, snowflakes.
@@ -23,7 +24,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 | --- | --- |
 | ![Morning: big clock, weather tips, an "Out the door in 28 min" countdown and the chores left, including one carried over from Saturday](docs/screenshots/morning.png) | ![Evening: chores before bed, tomorrow's plan and the grocery list in warm dark colors](docs/screenshots/evening.png) |
 | **Late night** | **Phone page** |
-| ![Late night: a dim clock with tomorrow's first plans and a dimmed photo](docs/screenshots/night.png) | <img src="docs/screenshots/phone.png" alt="The phone page: notes, the calendar button and leave-by times" width="260"> |
+| ![Late night: a dim clock with tomorrow's first plans and a dimmed photo](docs/screenshots/night.png) | <img src="docs/screenshots/phone.png" alt="The phone page’s Today tab: weather, the kitchen note, today’s events, a chore ring for each person and the grocery list" width="260"> |
 
 ## What you need
 
@@ -65,6 +66,14 @@ Kitchen Hub has no password, so **don't forward its port on your router**: anyon
 Two tips:
 - In the Tailscale admin console, choose **Disable key expiry** for the kitchen PC, or it gets signed out after about six months.
 - Run `tailscale up --unattended` once on the PC so it stays connected even before anyone signs in to Windows.
+
+#### Opening it with no signal
+
+Browsers only let a page save itself for offline use over HTTPS. Tailscale can give the kitchen PC an HTTPS address that only your devices can reach:
+
+1. In the Tailscale admin console, under **DNS**, make sure **MagicDNS** is on and turn on **HTTPS Certificates**.
+2. On the kitchen PC, run `tailscale serve --bg 8080`.
+3. On your phone, open `https://<pc-name>.<your-tailnet>.ts.net/phone` (the exact name is in the Tailscale app) and add *that* to your home screen.
 
 Windows normally treats Tailscale as a private network, so the firewall rule from `setup.ps1` already lets it through. If phones can't connect, check that the Tailscale network is set to Private in Windows settings.
 
@@ -154,10 +163,22 @@ The pointer hides itself when the touchpad isn't in use.
 
 ### The phone page
 
+Tabs along the bottom, like an app:
+
+- **Today:** the weather, notes on the kitchen screen, today’s events (what’s on now is marked), a chore ring for each person and what’s on the grocery list. Weather alerts show here too.
+- **Calendar:** the next 7 days as a list, each with its forecast; *Show the next week* for more.
+- **Chores:** today’s chores, what’s left first. Tap a name to see only theirs, tap a chore to check it off. Shows this week’s stars.
+- **Groceries:** add, check off, *Add again* buttons. Works with no signal (see below).
+- **More:** everything you set up once, below.
+
+Under *More*:
+
 - **Notes** for the kitchen, from someone, kept for 1 day, 3 days or a week.
 - **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before. Tick *Skip on days with no school* (ticked for you when the name says "school") and it stays quiet on big holidays like Thanksgiving and Christmas, plus any days off on your [school calendar](#school-calendar).
 - **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
 - Tap any note, chore, countdown or leave-by time to change it.
+
+**With no signal** (in a store, say), the page shows the last copy it saved, with a banner saying so. Grocery changes are marked *waiting to sync* and go through on their own once the phone reaches the kitchen PC again; other changes need a connection. If the page is already open, or was opened recently, that’s all automatic. To open it from scratch with no signal at all, the page has to come over HTTPS, which [Tailscale can do](#opening-it-with-no-signal).
 
 ### On the kitchen screen
 
@@ -167,7 +188,7 @@ The pointer hides itself when the touchpad isn't in use.
 
 ## Troubleshooting
 
-- **Phone page won't load:** the phone must be on the same Wi-Fi. If the `.local` address doesn't work, use the PC's IP address (run `ipconfig` on the PC).
+- **Phone page won't load:** the phone must be on the same Wi-Fi (or on Tailscale). If the `.local` address doesn't work, use the PC's IP address (run `ipconfig` on the PC).
 - **Not full screen:** press any key. Re-running `setup.ps1` as administrator turns off Edge's "startup boost", the usual cause.
 - **A note in the bottom-left corner:** the calendar, weather or server stopped updating. It clears itself once things recover.
 - **"Couldn't update the calendar":** the calendar link in `config.json` is wrong or was reset. Copy it again.
@@ -198,8 +219,9 @@ npm start                            # http://localhost:8080 and /phone
 | --- | --- |
 | `server.js` | Express server: state (`data/state.json`), calendar fetching and parsing, weather alerts, photo uploads, and the JSON API. |
 | `public/index.html`, `public/app.js` | The kitchen screen: time-of-day Home screens, tabs, slideshow, keyboard handling. |
-| `public/phone.html`, `public/phone.js` | The phone editor. |
-| `public/shared.js` | Helpers used by both pages (DOM builder, countdowns, alert banners). |
+| `public/phone.html`, `public/phone.js` | The phone page: Today, Calendar, Chores and Groceries tabs, the editors under More, and the offline copy and sync queue. |
+| `public/sw.js` | Lets the phone page open with no signal (over HTTPS). |
+| `public/shared.js` | Helpers used by both pages (DOM builder, countdowns, alert banners, weather icons, events for a day). |
 | `public/holidays.js` | Holiday dates (including Easter, Thanksgiving and Lunar New Year), seasons, and the drawings for the garlands, corner piles and drifting pieces. |
 | `public/style.css` | All styles; colors are CSS variables, swapped for the dusk theme. |
 | `scripts/setup.ps1` | One-time Windows setup (run as administrator). |

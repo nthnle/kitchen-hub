@@ -560,12 +560,58 @@ body:has(.status-badge:not([hidden])) .decor-corner.left { display: none; }
 body.phone { padding: 16px; max-width: 40rem; margin: 0 auto; font-size: 17px; }
 body.phone h1 { font-family: Outfit, sans-serif; font-size: 1.6rem; margin: 0.2em 0 0.8em; }
 body.phone h2 { font-size: 1.15rem; }
-.card { background: var(--panel); border-radius: 20px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow); scroll-margin-top: 4rem; }
-/* jump-to-section bar, stays at the top while scrolling */
-.jump { position: sticky; top: 0; z-index: 5; display: flex; gap: 0.4rem; overflow-x: auto; margin: 0 -16px 1rem; padding: 0.5rem 16px; background: var(--bg); scrollbar-width: none; }
-.jump::-webkit-scrollbar { display: none; }
-.jump a { flex: none; padding: 0.45rem 0.9rem; border-radius: 999px; background: var(--panel); color: var(--ink); text-decoration: none; font-size: 0.95rem; box-shadow: 0 1px 2px rgba(90, 60, 20, 0.08); }
-html { scroll-behavior: smooth; }
+.card { background: var(--panel); border-radius: 20px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow); scroll-margin-top: 1rem; }
+/* tabs along the bottom, like an app */
+body.phone { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom)); }
+body.phone main { padding: 0; overflow: visible; }
+.p-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0.3rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); }
+.p-tabs a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem; min-height: 3.1rem; font-size: 0.72rem; font-weight: 500; color: var(--muted); text-decoration: none; }
+.p-tabs a[aria-current] { color: var(--accent); font-weight: 600; }
+.p-tabs svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.p-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.6rem; margin: 0.4rem 0.2rem 0.9rem; }
+body.phone .p-head h1 { margin: 0; font-size: 1.75rem; }
+.p-head > .muted { padding-bottom: 0.3rem; }
+.p-wx { display: flex; align-items: center; gap: 0.3rem; font-family: Outfit, sans-serif; font-size: 1.6rem; }
+.p-wx .ico { width: 1.8rem; height: 1.8rem; display: inline-flex; }
+.p-wx-line { margin: -0.5rem 0.2rem 0.9rem; font-size: 0.92rem; }
+.p-offline { margin: 0.4rem 0 0.9rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: #EDE6F5; color: #3E2F5B; font-size: 0.92rem; line-height: 1.35; }
+.p-link { display: block; color: inherit; text-decoration: none; }
+.p-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; }
+.p-card-head h2 { margin: 0; color: var(--accent); }
+.p-note { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem; padding: 0.7rem 0.9rem; border-radius: 14px; background: #FFF4C7; color: #2B2420; text-decoration: none; }
+.p-note-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--c); flex: none; }
+.p-ev { display: flex; gap: 0.7rem; padding: 0.45rem 0; }
+.p-ev-bar { width: 4px; border-radius: 2px; background: var(--c); flex: none; }
+.p-ev-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.p-ev-title { overflow-wrap: anywhere; }
+.p-ev.past { opacity: 0.55; }
+.p-now { margin-left: 0.5em; padding: 0.05em 0.55em; border-radius: 999px; background: var(--c); color: #fff; font-size: 0.72em; font-weight: 600; vertical-align: 0.1em; }
+.p-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(3.7rem, 1fr)); gap: 0.4rem; }
+.p-ring-person { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; text-align: center; }
+.p-ring { position: relative; width: 3rem; height: 3rem; display: grid; place-items: center; }
+.p-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.p-ring b { font-family: Outfit, sans-serif; font-size: 0.95rem; }
+.p-ring-name { font-weight: 600; font-size: 0.92rem; }
+.p-groc-line { margin: 0; }
+.p-day { padding: 0.7rem 0; border-top: 1px solid var(--line); }
+.p-day:first-child { border-top: 0; padding-top: 0.2rem; }
+.p-day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.2rem; }
+.p-day-head h2 { margin: 0; font-size: 1.05rem; }
+.p-day.today h2 { color: var(--accent); }
+.p-day-wx { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+.p-day-wx .ico { width: 1.15rem; height: 1.15rem; display: inline-flex; }
+.p-day > p { margin: 0.2rem 0; }
+button.wide { width: 100%; margin-bottom: 1rem; min-height: 46px; }
+body.phone .chips { flex-wrap: nowrap; gap: 0.4rem; margin: 0 -16px 0.9rem; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+body.phone .chips::-webkit-scrollbar { display: none; }
+body.phone .chip { flex: none; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.6rem; padding: 0 0.85rem; border: 1px solid var(--input-border); background: var(--panel); color: var(--ink); font: inherit; font-size: 0.92rem; font-weight: 600; }
+body.phone .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.chip-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; }
+body.phone .chore:not(.done) .check { border-color: var(--c, var(--check-border)); }
+#tab-chores .card .checklist, #tab-groceries .checklist { margin: 0.2rem 0; }
+.p-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin: 0 0.2rem; }
+.p-foot a { font-weight: 600; color: var(--accent); }
+
 /* list rows: tap the text to edit */
 .item-edit { flex: 1; min-width: 0; border: 0; background: none; text-align: left; padding: 0.35rem 0; min-height: 44px; font: inherit; color: inherit; }
 form.editing { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 12px; }
@@ -605,3 +651,5 @@ button.danger { color: #B42318; border-color: currentColor; }
 .grocery-wrap { padding: 6px; }
 .card-scroll, .side, .home-morning .col, .day-events { padding: 6px; margin: -6px; }
 .board-cols { padding: 6px; margin: calc(0.6em - 6px) -6px -6px; }
+/* "waiting to sync" stays readable on a checked-off item */
+body.phone .chore.done .muted { display: inline-block; text-decoration: none; }

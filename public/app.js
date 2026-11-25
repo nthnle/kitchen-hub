@@ -14,43 +14,6 @@ const fmtLongDate = (d) => d.toLocaleDateString([], { weekday: 'long', month: 'l
 const fmtShortDate = (d) => d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 const clockParts = (d) => { const [t, ap] = fmtClock(d).split(' '); return { t, ap: ap || '' }; };
 
-// ---------- icons (inline SVG; static markup only) ----------
-const ICONS = {
-  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="#E0952B" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="#FCE3B4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>',
-  moon: '<svg viewBox="0 0 24 24" fill="#F6EEDC" stroke="#8A6A2F" stroke-width="1.6" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
-  partly: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="3.5" fill="#FCE3B4" stroke="#E0952B"/><path d="M8.5 2.5v1.3M2.5 8.5h1.3M4.3 4.3l.9.9M12.7 4.3l-.9.9" stroke="#E0952B"/><path d="M9 19.5h8.5a3.5 3.5 0 0 0 .5-6.96A4.8 4.8 0 0 0 9.2 11.5 4 4 0 0 0 9 19.5z" fill="#F1ECE4" stroke="#8C8174"/></svg>',
-  cloud: '<svg viewBox="0 0 24 24" fill="#F1ECE4" stroke="#8C8174" stroke-width="1.7" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 9.2 4.4 4.4 0 0 0 7 18z"/></svg>',
-  rain: '<svg viewBox="0 0 24 24" fill="none" stroke="#2A6FAA" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 6.2 4.4 4.4 0 0 0 7 15z" fill="#E3EEF8"/><path d="M9 18l-1 2.5M13 18l-1 2.5M17 18l-1 2.5"/></svg>',
-  storm: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 6.2 4.4 4.4 0 0 0 7 15z" fill="#E6E2EC" stroke="#6B6478"/><path d="M12.5 15l-2 3.5h3l-2 3.5" stroke="#E0952B"/></svg>',
-  snow: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 6.2 4.4 4.4 0 0 0 7 15z" fill="#EEF3F8" stroke="#7A8CA0"/><path d="M9 18.5v.01M12 20.5v.01M15 18.5v.01" stroke="#2A6FAA" stroke-width="2.6"/></svg>',
-  fog: '<svg viewBox="0 0 24 24" fill="none" stroke="#8C8174" stroke-width="1.8" stroke-linecap="round"><path d="M4 8h16M6 12h12M4 16h16M8 20h8"/></svg>',
-  umbrella: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v2M4 12a8 8 0 0 1 16 0z"/><path d="M12 12v6a2 2 0 0 0 4 0"/></svg>',
-  coat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3l4 2 4-2 4 3-2 4h-2v11H8V10H6L4 6z"/></svg>',
-  heat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 10v6"/></svg>',
-  leaf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></svg>',
-  door: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4a1 1 0 0 1 1-1h9v18"/><path d="M15 3l4 2v16h-4M12 12v.5M3 21h18"/></svg>',
-  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-  check: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-};
-function icon(name, cls = '') {
-  const s = document.createElement('span');
-  s.className = `ico ${cls}`;
-  s.setAttribute('aria-hidden', 'true');
-  s.innerHTML = ICONS[name] || '';
-  return s;
-}
-// Open-Meteo weather codes → icon.
-function wxKind(code, night) {
-  if (code === 0 || code === 1) return night ? 'moon' : 'sun';
-  if (code === 2) return night ? 'cloud' : 'partly';
-  if (code === 45 || code === 48) return 'fog';
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
-  if (code >= 95) return 'storm';
-  if (code >= 51) return 'rain';
-  return 'cloud';
-}
-const WX_WORD = (code) => ({ sun: 'Sunny', moon: 'Clear', partly: 'Partly cloudy', cloud: 'Cloudy', rain: 'Rain', storm: 'Storms', snow: 'Snow', fog: 'Foggy' })[wxKind(code)];
-
 // ---------- tabs ----------
 let currentView = 'home';
 function showView(name) {
@@ -97,18 +60,6 @@ function currentMode() {
 }
 
 // ---------- calendar helpers ----------
-function eventsOn(day) {
-  const key = ymd(day);
-  const start = new Date(day); start.setHours(0, 0, 0, 0);
-  const end = new Date(start); end.setDate(end.getDate() + 1);
-  return S.calendar.events.filter((e) =>
-    e.allDay ? e.start <= key && e.end > key : new Date(e.start) < end && new Date(e.end) > start
-  ).sort((a, b) => (a.allDay === b.allDay ? (a.start < b.start ? -1 : 1) : a.allDay ? -1 : 1));
-}
-function fmtTime(iso) {
-  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).replace(':00', '').replace(' ', '').toLowerCase();
-}
-const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 function untilLabel(mins) {
   if (mins < 60) return `in ${mins} min`;
   const h = Math.floor(mins / 60), m = mins % 60;

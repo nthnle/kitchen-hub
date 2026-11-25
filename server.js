@@ -432,8 +432,10 @@ app.post('/api/grocery', (req, res) => {
   const text = String(req.body.text || '').trim().slice(0, 80);
   if (!text) return res.status(400).json({ error: 'text required' });
   // Already on the list and not checked off? Don't add it twice.
-  if (!state.grocery.some((g) => !g.done && g.text.toLowerCase() === text.toLowerCase())) {
-    state.grocery.push({ id: id(), text, done: false });
+  // (A phone that was offline may send an item it added and then checked off: { done: true }.)
+  const done = req.body.done === true;
+  if (done || !state.grocery.some((g) => !g.done && g.text.toLowerCase() === text.toLowerCase())) {
+    state.grocery.push({ id: id(), text, done });
   }
   // Remember what gets bought, for one-tap "add again" buttons.
   const key = text.toLowerCase();
@@ -460,7 +462,8 @@ app.delete('/api/grocery-history/:text', (req, res) => {
 });
 app.post('/api/grocery/:id/toggle', (req, res) => {
   const item = state.grocery.find((g) => g.id === req.params.id);
-  if (item) item.done = !item.done;
+  // A phone that was offline sends what it set ({ done }), so a replay can't flip it back.
+  if (item) item.done = typeof req.body?.done === 'boolean' ? req.body.done : !item.done;
   saveState();
   res.json({ ok: true });
 });

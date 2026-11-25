@@ -15,105 +15,134 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="phone">
-  <h1>Kitchen Hub</h1>
-  <nav class="jump" aria-label="Jump to">
-    <a href="#notes">Notes</a><a href="#calendar">Calendar</a><a href="#leave">Leave-by</a><a href="#groceries">Groceries</a><a href="#chores">Chores</a><a href="#countdowns">Countdowns</a><a href="#photo-frame">Photos</a>
-  </nav>
-  <div id="alerts" class="alerts phone-alerts"></div>
+  <main>
+  <div id="offline" class="p-offline" role="status" hidden></div>
+  <div class="tab" id="tab-today">
+    <header class="p-head">
+      <div><span class="muted" id="today-date"></span><h1 id="today-greet">Kitchen Hub</h1></div>
+      <div class="p-wx" id="today-wx"></div>
+    </header>
+    <p class="p-wx-line muted" id="today-wx-line"></p>
+    <div id="alerts" class="alerts phone-alerts"></div>
+    <div id="today-notes"></div>
+    <a class="card p-link" href="#calendar" id="today-events"></a>
+    <a class="card p-link" href="#chores" id="today-chores"></a>
+    <a class="card p-link" href="#groceries" id="today-grocery"></a>
+  </div>
 
-  <section class="card" id="notes">
-    <h2>📝 Notes for the kitchen</h2>
-    <form id="note-form" class="stack">
-      <input id="note-text" placeholder="e.g. Soccer moved to 5, pickup at 6:30" maxlength="200" required autocomplete="off">
-      <div class="row2">
-        <select id="note-from" aria-label="From"></select>
-        <select id="note-days" aria-label="Keep for">
-          <option value="1">Keep 1 day</option>
-          <option value="3">Keep 3 days</option>
-          <option value="7">Keep 1 week</option>
-        </select>
-      </div>
-      <button>Post note</button>
-    </form>
-    <ul id="note-list" class="plain"></ul>
-    <p class="muted small">Tap an item to change it.</p>
-  </section>
-
-  <section class="card" id="calendar">
-    <h2>📅 Calendar</h2>
+  <div class="tab" id="tab-calendar">
+    <header class="p-head"><h1>Calendar</h1></header>
+    <div class="card" id="agenda"></div>
+    <button id="agenda-more" class="ghost wide">Show the next week</button>
     <p class="muted small">Add events in your phone's calendar app as usual. The kitchen screen checks every 10 minutes, but Google can take a few hours to share a change.</p>
     <button id="cal-refresh" class="ghost">Update calendar now</button>
-  </section>
+  </div>
 
-  <section class="card" id="leave">
-    <h2>🚪 Leave-by times</h2>
-    <p class="muted small">The kitchen screen counts down to these. Mornings show the next one; the rest of the day, it appears an hour before.</p>
-    <form id="dep-form" class="stack">
-      <input id="dep-label" placeholder="e.g. School drop-off" maxlength="40" required autocomplete="off">
-      <label class="muted small" for="dep-time">Leave by</label>
-      <input id="dep-time" type="time" required>
-      <div id="dep-days" class="days"></div>
-      <p class="muted small">Weekdays are picked for you. Unselect every day for "every day".</p>
-      <label class="check-row"><input id="dep-school" type="checkbox"> Skip on days with no school (holidays and breaks)</label>
-      <button>Add leave-by time</button>
-    </form>
-    <ul id="dep-list" class="plain"></ul>
-    <p class="muted small">Tap an item to change it.</p>
-  </section>
+  <div class="tab" id="tab-chores">
+    <header class="p-head"><h1>Chores today</h1><span class="muted" id="chores-total"></span></header>
+    <div class="chips" id="chore-chips" role="group" aria-label="Show chores for"></div>
+    <div class="card"><ul id="chores-today" class="checklist"></ul></div>
+    <p class="p-foot"><span class="muted small" id="chore-stars"></span><a href="#manage">Add or change chores</a></p>
+  </div>
 
-  <section class="card" id="groceries">
-    <h2>🛒 Groceries</h2>
-    <form id="grocery-form" class="add-row">
-      <input id="grocery-input" placeholder="Add an item…" autocomplete="off">
-      <button>Add</button>
-    </form>
-    <div id="grocery-quick"></div>
-    <ul id="grocery" class="checklist"></ul>
-    <button id="grocery-clear" class="ghost">Remove checked items</button>
-  </section>
+  <div class="tab" id="tab-groceries">
+    <header class="p-head"><h1>Groceries</h1><span class="muted" id="grocery-count"></span></header>
+    <section class="card" id="groceries">
+      <form id="grocery-form" class="add-row">
+        <input id="grocery-input" placeholder="Add an item…" autocomplete="off">
+        <button>Add</button>
+      </form>
+      <div id="grocery-quick"></div>
+      <ul id="grocery" class="checklist"></ul>
+      <button id="grocery-clear" class="ghost">Remove checked items</button>
+    </section>
 
-  <section class="card" id="chores">
-    <h2>⭐ Today's chores</h2>
-    <ul id="chores-today" class="checklist"></ul>
-  </section>
+  </div>
 
-  <section class="card">
-    <h2>Manage chores</h2>
-    <form id="chore-form" class="stack">
-      <input id="chore-title" placeholder="Chore, e.g. Feed the dog" required autocomplete="off">
-      <select id="chore-person"></select>
-      <select id="chore-when" aria-label="When"></select>
-      <div id="chore-days" class="days"></div>
-      <p id="chore-days-hint" class="muted small">Leave every day unselected for a daily chore.</p>
-      <input id="chore-date" type="date" aria-label="Date" hidden>
-      <button>Add chore</button>
-    </form>
-    <ul id="chore-list" class="plain"></ul>
-    <p class="muted small">Tap an item to change it.</p>
-  </section>
+  <div class="tab" id="tab-more">
+    <header class="p-head"><h1>More</h1></header>
+    <section class="card" id="notes">
+      <h2>📝 Notes for the kitchen</h2>
+      <form id="note-form" class="stack">
+        <input id="note-text" placeholder="e.g. Soccer moved to 5, pickup at 6:30" maxlength="200" required autocomplete="off">
+        <div class="row2">
+          <select id="note-from" aria-label="From"></select>
+          <select id="note-days" aria-label="Keep for">
+            <option value="1">Keep 1 day</option>
+            <option value="3">Keep 3 days</option>
+            <option value="7">Keep 1 week</option>
+          </select>
+        </div>
+        <button>Post note</button>
+      </form>
+      <ul id="note-list" class="plain"></ul>
+      <p class="muted small">Tap an item to change it.</p>
+    </section>
 
-  <section class="card" id="countdowns">
-    <h2>🎉 Countdowns</h2>
-    <form id="countdown-form" class="stack">
-      <input id="cd-title" placeholder="e.g. 🎂 Grandma's birthday" maxlength="60" required autocomplete="off">
-      <input id="cd-date" type="date" required aria-label="Date">
-      <label class="check-row"><input id="cd-yearly" type="checkbox"> Repeats every year (birthdays, holidays)</label>
-      <button>Add countdown</button>
-    </form>
-    <ul id="countdown-list" class="plain"></ul>
-    <p class="muted small">Tap an item to change it.</p>
-  </section>
+    <section class="card" id="leave">
+      <h2>🚪 Leave-by times</h2>
+      <p class="muted small">The kitchen screen counts down to these. Mornings show the next one; the rest of the day, it appears an hour before.</p>
+      <form id="dep-form" class="stack">
+        <input id="dep-label" placeholder="e.g. School drop-off" maxlength="40" required autocomplete="off">
+        <label class="muted small" for="dep-time">Leave by</label>
+        <input id="dep-time" type="time" required>
+        <div id="dep-days" class="days"></div>
+        <p class="muted small">Weekdays are picked for you. Unselect every day for "every day".</p>
+        <label class="check-row"><input id="dep-school" type="checkbox"> Skip on days with no school (holidays and breaks)</label>
+        <button>Add leave-by time</button>
+      </form>
+      <ul id="dep-list" class="plain"></ul>
+      <p class="muted small">Tap an item to change it.</p>
+    </section>
 
-  <section class="card" id="photo-frame">
-    <h2>🖼️ Photo frame <span id="photo-count" class="muted small"></span></h2>
-    <label class="upload">
-      <input id="photo-input" type="file" accept="image/*" multiple>
-      <span>Add photos</span>
-    </label>
-    <p class="muted small">Photos already in the frame are skipped automatically. Newest first; tap one to see it larger.</p>
-    <p id="upload-status" class="muted small"></p>
-    <div id="photos" class="thumbs"></div>
-  </section>
+    <section class="card" id="manage">
+      <h2>⭐ Manage chores</h2>
+      <form id="chore-form" class="stack">
+        <input id="chore-title" placeholder="Chore, e.g. Feed the dog" required autocomplete="off">
+        <select id="chore-person"></select>
+        <select id="chore-when" aria-label="When"></select>
+        <div id="chore-days" class="days"></div>
+        <p id="chore-days-hint" class="muted small">Leave every day unselected for a daily chore.</p>
+        <input id="chore-date" type="date" aria-label="Date" hidden>
+        <button>Add chore</button>
+      </form>
+      <ul id="chore-list" class="plain"></ul>
+      <p class="muted small">Tap an item to change it.</p>
+    </section>
+
+    <section class="card" id="countdowns">
+      <h2>🎉 Countdowns</h2>
+      <form id="countdown-form" class="stack">
+        <input id="cd-title" placeholder="e.g. 🎂 Grandma's birthday" maxlength="60" required autocomplete="off">
+        <input id="cd-date" type="date" required aria-label="Date">
+        <label class="check-row"><input id="cd-yearly" type="checkbox"> Repeats every year (birthdays, holidays)</label>
+        <button>Add countdown</button>
+      </form>
+      <ul id="countdown-list" class="plain"></ul>
+      <p class="muted small">Tap an item to change it.</p>
+    </section>
+
+    <section class="card" id="photo-frame">
+      <h2>🖼️ Photo frame <span id="photo-count" class="muted small"></span></h2>
+      <label class="upload">
+        <input id="photo-input" type="file" accept="image/*" multiple>
+        <span>Add photos</span>
+      </label>
+      <p class="muted small">Photos already in the frame are skipped automatically. Newest first; tap one to see it larger.</p>
+      <p id="upload-status" class="muted small"></p>
+      <div id="photos" class="thumbs"></div>
+    </section>
+
+  </div>
+  </main>
+
+  <nav class="p-tabs" aria-label="Sections">
+    <a href="#today" data-tab="today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Today</a>
+    <a href="#calendar" data-tab="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM4 10h16M8 3v4M16 3v4"/></svg>Calendar</a>
+    <a href="#chores" data-tab="chores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Chores</a>
+    <a href="#groceries" data-tab="groceries"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7M9.5 19.5h.01M17 19.5h.01"/></svg>Groceries</a>
+    <a href="#more" data-tab="more"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>More</a>
+  </nav>
 
   <dialog id="photo-view" class="photo-view">
     <img id="photo-view-img" alt="">
