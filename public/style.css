@@ -332,7 +332,10 @@ body.dusk .holiday-chip { background: color-mix(in srgb, var(--hc) 30%, var(--pa
 .board-link:hover { background: var(--chip); }
 .board-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5em, 1fr)); align-content: start; gap: 0.9em; margin-top: 0.6em; overflow: auto; }
 .board-head .nowrap { white-space: nowrap; }
-.board-name { display: flex; align-items: baseline; gap: 0.45em; white-space: nowrap; }
+.board-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.45em; }
+.board-name > * { white-space: nowrap; }
+.board-head .ring-text { min-width: 0; }
+.board-col { min-width: 0; }
 .board-name .stars { font-size: 0.8em; }
 .board-col { display: flex; flex-direction: column; gap: 0.45em; min-height: 0; padding: 0.9em 0.8em; border-radius: 0.9em; background: var(--bg); box-shadow: inset 0 0.25em 0 var(--c); }
 .board-head { display: flex; align-items: center; gap: 0.6em; margin-bottom: 0.3em; }
