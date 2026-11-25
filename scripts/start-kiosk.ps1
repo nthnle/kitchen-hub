@@ -21,7 +21,10 @@ if ($Watchdog) {
 
 # Start the watchdog in its own hidden window unless the server is already up.
 function Test-Hub { try { Invoke-RestMethod "http://localhost:$port/api/version" -TimeoutSec 2 | Out-Null; $true } catch { $false } }
-if (-not (Test-Hub)) {
+# A busy server (e.g. receiving a big video) can miss the 2-second check, so also look for a watchdog
+# that's already running; a second one would just crash over and over on the port the first one holds.
+function Test-Watchdog { [bool](Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -match 'start-kiosk\.ps1.*-Watchdog' }) }
+if (-not (Test-Hub) -and -not (Test-Watchdog)) {
     Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-Watchdog')
     for ($i = 0; $i -lt 60 -and -not (Test-Hub); $i++) { Start-Sleep -Seconds 1 }
 }
