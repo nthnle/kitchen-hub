@@ -125,10 +125,10 @@
     <section class="card" id="photo-frame">
       <h2>🖼️ Photo frame <span id="photo-count" class="muted small"></span></h2>
       <label class="upload">
-        <input id="photo-input" type="file" accept="image/*" multiple>
-        <span>Add photos</span>
+        <input id="photo-input" type="file" accept="image/*,video/*" multiple>
+        <span>Add photos or videos</span>
       </label>
-      <p class="muted small">Photos already in the frame are skipped automatically. Newest first; tap one to see it larger.</p>
+      <p class="muted small">Anything already in the frame is skipped automatically. Newest first; tap one to see it larger or play it.</p>
       <p id="upload-status" class="muted small"></p>
       <div id="photos" class="thumbs"></div>
     </section>
@@ -146,10 +146,11 @@
 
   <dialog id="photo-view" class="photo-view">
     <img id="photo-view-img" alt="">
+    <video id="photo-view-video" controls playsinline hidden></video>
     <p id="photo-view-info" class="muted small"></p>
     <div class="row2">
-      <button id="photo-view-delete" class="ghost danger">Delete photo</button>
-      <button id="photo-view-close" class="ghost">Close</button>
+      <button id="photo-view-delete" class="ghost danger">Delete</button>
+      <button id="photo-view-close" class="ghost" autofocus>Close</button>
     </div>
   </dialog>
 

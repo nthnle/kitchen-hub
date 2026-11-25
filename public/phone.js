@@ -378,34 +378,80 @@ function render() {
     [el('b', {}, c.title), el('span', { class: 'muted small' }, ` · ${c.when.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} · ${daysLabel(c.days)}${c.yearly ? ' · yearly' : ''}`)],
     () => confirm(`Delete "${c.title}"?`) && act(() => api.send('DELETE', `/api/countdowns/${c.id}`)))));
 
-  // Photos
-  document.getElementById('photo-count').textContent = S.photos.length ? `· ${S.photos.length}` : '';
-  document.getElementById('photos').replaceChildren(...S.photos.map((name) =>
-    el('div', { class: 'thumb' },
-      el('img', { src: `/photos/${encodeURIComponent(name)}`, loading: 'lazy', alt: '', onclick: () => viewPhoto(name) }),
-      el('button', { class: 'x', title: 'Delete', onclick: () => deletePhoto(name) }, '✕'))));
-  if (!S.photos.length) document.getElementById('photos').replaceChildren(el('p', { class: 'empty' }, 'No photos yet.'));
+  renderPhotos();
 }
 
-// Uploaded photos are named "<time added>-<random>.jpg".
+// Photos and videos, newest first, as small server-made thumbnails. Only redrawn when the list
+// changes: rebuilding it on every update made phones download the pictures again and again.
+let photoSig = null;
+function renderPhotos() {
+  const media = [...S.photos, ...(S.videos || [])].sort().reverse();
+  const sig = media.join('|');
+  if (sig === photoSig) return;
+  photoSig = sig;
+  const nv = (S.videos || []).length, np = S.photos.length;
+  document.getElementById('photo-count').textContent = media.length
+    ? `· ${[np ? `${np} photo${np === 1 ? '' : 's'}` : '', nv ? `${nv} video${nv === 1 ? '' : 's'}` : ''].filter(Boolean).join(', ')}` : '';
+  document.getElementById('photos').replaceChildren(...media.map((name) =>
+    el('div', { class: `thumb${isVideo(name) ? ' is-video' : ''}`, onclick: () => viewPhoto(name) },
+      // A video uploaded without a still (or before stills existed) gets a plain tile instead.
+      el('img', { src: `/thumbs/${encodeURIComponent(name)}`, loading: 'lazy', decoding: 'async', alt: '',
+        onerror: (e) => { e.target.closest('.thumb').classList.add('no-thumb'); e.target.remove(); } }),
+      isVideo(name) ? el('span', { class: 'play-badge', 'aria-label': 'Video' }, '▶') : null,
+      el('button', { class: 'x', title: 'Delete', onclick: (e) => { e.stopPropagation(); deletePhoto(name); } }, '✕'))));
+  if (!media.length) document.getElementById('photos').replaceChildren(el('p', { class: 'empty' }, 'No photos or videos yet.'));
+}
+
+// A still from a video, grabbed on the phone before uploading, for the grid's thumbnail.
+// Gives up quietly (no still, plain tile) if the phone can't decode it.
+async function videoPoster(file) {
+  const url = URL.createObjectURL(file);
+  const v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto';
+  const once = (ev) => new Promise((r) => { v.addEventListener(ev, () => r(true), { once: true }); v.addEventListener('error', () => r(false), { once: true }); });
+  const timeout = (p) => Promise.race([p, new Promise((r) => setTimeout(() => r(false), 8000))]);
+  try {
+    v.src = url;
+    if (!(await timeout(once('loadeddata')))) return null;
+    const seek = once('seeked');
+    v.currentTime = Math.min(0.5, (v.duration || 1) / 2);
+    if (!(await timeout(seek)) || !v.videoWidth) return null;
+    const scale = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    return await timeout(new Promise((r) => c.toBlob(r, 'image/jpeg', 0.8)));
+  } catch { return null; } finally { v.removeAttribute('src'); v.load(); URL.revokeObjectURL(url); }
+}
+
+const isVideo = (name) => /\.(mp4|m4v|mov|webm)$/i.test(name);
+// Uploads are named "<time added>-<random>.jpg".
 function photoAdded(name) {
   const t = Number(name.split('-')[0]);
   return t > 1e12 ? new Date(t).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 }
 function deletePhoto(name) {
-  if (!confirm('Delete this photo from the frame?')) return false;
+  if (!confirm(`Delete this ${isVideo(name) ? 'video' : 'photo'} from the frame?`)) return false;
   act(() => api.send('DELETE', `/api/photos/${encodeURIComponent(name)}`));
   return true;
 }
 const viewer = document.getElementById('photo-view');
+const viewerImg = document.getElementById('photo-view-img');
+const viewerVideo = document.getElementById('photo-view-video');
 let viewing = null;
 function viewPhoto(name) {
   viewing = name;
-  document.getElementById('photo-view-img').src = `/photos/${encodeURIComponent(name)}`;
+  const src = `/photos/${encodeURIComponent(name)}`;
+  const video = isVideo(name);
+  viewerImg.hidden = video;
+  viewerVideo.hidden = !video;
+  if (video) { viewerImg.removeAttribute('src'); viewerVideo.src = src; } else { viewerImg.src = src; }
   const added = photoAdded(name);
   document.getElementById('photo-view-info').textContent = added ? `Added ${added}` : '';
   viewer.showModal();
 }
+// Stop a playing video when the viewer closes.
+viewer.addEventListener('close', () => { viewerVideo.pause(); viewerVideo.removeAttribute('src'); viewerVideo.load(); });
 document.getElementById('photo-view-close').addEventListener('click', () => viewer.close());
 document.getElementById('photo-view-delete').addEventListener('click', () => { if (deletePhoto(viewing)) viewer.close(); });
 viewer.addEventListener('click', (e) => { if (e.target === viewer) viewer.close(); });
@@ -496,20 +542,36 @@ document.getElementById('photo-input').addEventListener('change', async (e) => {
   const files = [...e.target.files];
   if (!files.length) return;
   const status = document.getElementById('upload-status');
-  status.textContent = `Uploading ${files.length} photo${files.length > 1 ? 's' : ''}…`;
+  const what = `${files.length} ${files.length > 1 ? 'files' : 'file'}`;
   const form = new FormData();
   files.forEach((f) => form.append('photos', f));
+  if (files.some((f) => f.type.startsWith('video/'))) status.textContent = 'Getting videos ready…';
+  for (const [i, f] of files.entries()) {
+    if (!f.type.startsWith('video/')) continue;
+    const still = await videoPoster(f);
+    if (still) form.append('posters', still, `${i}.jpg`);
+  }
+  status.textContent = `Uploading ${what}…`;
   try {
-    const r = await fetch('/api/photos', { method: 'POST', body: form });
-    const j = await r.json();
-    if (!r.ok) status.textContent = 'Upload failed.';
+    // XMLHttpRequest rather than fetch, because only it reports upload progress (videos take a while).
+    const { ok, j } = await new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('POST', '/api/photos');
+      x.upload.onprogress = (p) => {
+        if (p.lengthComputable) status.textContent = p.loaded < p.total ? `Uploading ${what}… ${Math.round((p.loaded / p.total) * 100)}%` : 'Checking for duplicates…';
+      };
+      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch { /* not JSON */ } resolve({ ok: x.status < 300, j }); };
+      x.onerror = reject;
+      x.send(form);
+    });
+    if (!ok) status.textContent = `Upload failed. ${j.error || ''}`.trim();
     else {
       const skipped = j.skipped || [];
-      const rejected = files.length - j.added - skipped.length; // not a supported image type
+      const rejected = files.length - j.added - skipped.length; // not a supported type
       status.textContent = [
         `Added ${j.added}.`,
         skipped.length ? `Skipped ${skipped.length} already in the frame.` : '',
-        rejected > 0 ? `${rejected} couldn't be added (use JPEG, PNG, WebP or GIF).` : '',
+        rejected > 0 ? `${rejected} couldn't be added (photos: JPEG, PNG, WebP or GIF; videos: MP4, MOV or WebM).` : '',
       ].filter(Boolean).join(' ');
     }
   } catch {

@@ -14,7 +14,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Notes.** Post a note from your phone, or with *+ Add a note* on the kitchen screen ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
-- **Photo frame.** Upload photos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side.
+- **Photo frame.** Upload photos and videos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side. Videos play full screen from start to finish, muted unless you turn sound on.
 - **On your phone, anywhere.** The phone page has the same Today, Calendar, Chores and Groceries as the kitchen screen, with the editors under *More*. It keeps the last copy on the phone, so the grocery list still works in a store with no signal and syncs what you check off once you’re back online.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
@@ -88,7 +88,8 @@ Settings live in `config.json` in the Kitchen Hub folder ([`config.example.json`
 | `calendarRefreshMinutes` | How often calendars are re-read (default 10). |
 | `weather` | Your `latitude` and `longitude` (look your town up on latlong.net) and `fahrenheit` or `celsius`. |
 | `photoFrameAfterMinutes` | After this many idle minutes the screen returns to Home, and during the day starts the slideshow. `0` turns the slideshow off. |
-| `slideSeconds` | How long each slideshow photo stays up (default 8; collages get 3 more). |
+| `slideSeconds` | How long each slideshow photo stays up (default 8; collages get 3 more). Videos always play to the end. |
+| `videoSound` | `true` plays slideshow videos with sound. Off by default. |
 | `screenOffAt` | When the monitor turns off for the night once nobody's using it (default `"0:00"`, midnight; `false` keeps it on). Any key or touch wakes it, and it turns back on when morning starts. |
 | `showCountdownsWithinDays` | Show a countdown on the kitchen screen once it's this many days away (default 60). The phone page always lists them all. |
 | `trash` | Pickup days, e.g. `[{"name": "Trash", "days": ["Mon", "Thu"]}, {"name": "Recycling", "days": ["Wed"]}]`. The evening before each pickup, "Put out the trash" (or recycling) joins the chores for everyone, or for one person if you add `"person": "Dad"` (they get the star). If nobody does it, it's still there on pickup morning until noon. |
@@ -175,7 +176,7 @@ Under *More*:
 
 - **Notes** for the kitchen, from someone, kept for 1 day, 3 days or a week.
 - **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before. Tick *Skip on days with no school* (ticked for you when the name says "school") and it stays quiet on big holidays like Thanksgiving and Christmas, plus any days off on your [school calendar](#school-calendar).
-- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done), **countdowns** (tick "repeats every year" for birthdays) and **photos** (duplicates are skipped automatically).
+- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done), **countdowns** (tick "repeats every year" for birthdays) and **photos and videos** (up to 500 MB each; duplicates are skipped automatically).
 - Tap any note, chore, countdown or leave-by time to change it.
 
 **With no signal** (in a store, say), the page shows the last copy it saved, with a banner saying so. Grocery changes are marked *waiting to sync* and go through on their own once the phone reaches the kitchen PC again; other changes need a connection. If the page is already open, or was opened recently, that’s all automatic. To open it from scratch with no signal at all, the page has to come over HTTPS, which [Tailscale can do](#opening-it-with-no-signal).
@@ -194,6 +195,7 @@ Under *More*:
 - **"Couldn't update the calendar":** the calendar link in `config.json` is wrong or was reset. Copy it again.
 - **"Can't reach the Kitchen Hub server":** check `data\server-error.log`. The server restarts itself within a few seconds if it stops.
 - **Slideshow flickers on an older PC:** update the graphics driver. Photos are already shrunk to screen size before they're shown.
+- **A video never shows in the slideshow:** the PC can't play its format, so it's skipped. iPhones record in HEVC by default, which Edge plays only on some PCs. Try installing *HEVC Video Extensions* from the Microsoft Store, or set the iPhone to *Settings → Camera → Formats → Most Compatible* for future videos. An iPhone can still play it on the phone page.
 
 ## Privacy
 
@@ -203,7 +205,7 @@ Kitchen Hub has no accounts and no cloud service of its own. Your notes, chores,
 - [Open-Meteo](https://open-meteo.com) for weather and air quality, and the [National Weather Service](https://www.weather.gov) for alerts (both only receive your configured location),
 - Google Fonts for the typefaces.
 
-Back up the `data` folder to keep your lists and photos.
+Back up the `data` folder to keep your lists, photos and videos.
 
 ## For developers
 

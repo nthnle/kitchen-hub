@@ -7,15 +7,24 @@ const os = require('os');
 const express = require('express');
 const multer = require('multer');
 const ical = require('node-ical');
+// Makes the phone page's thumbnails. If it isn't installed yet (pulled an update but didn't run
+// npm install), the grid falls back to the full-size photos instead of the server failing to start.
+let sharp = null;
+try { sharp = require('sharp'); } catch { console.warn('sharp is missing: run "npm install" for fast photo thumbnails.'); }
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
 const PHOTO_DIR = path.join(DATA_DIR, 'photos');
+const THUMB_DIR = path.join(DATA_DIR, 'thumbs'); // small copies for the phone page's grid
+const UPLOAD_TMP = path.join(DATA_DIR, 'upload-tmp'); // video stills on their way to thumbs/
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 const CONFIG_FILE = path.join(ROOT, 'config.json');
 const CONFIG_EXAMPLE = path.join(ROOT, 'config.example.json');
 
 fs.mkdirSync(PHOTO_DIR, { recursive: true });
+fs.mkdirSync(THUMB_DIR, { recursive: true });
+fs.rmSync(UPLOAD_TMP, { recursive: true, force: true }); // leftovers from an interrupted upload
+fs.mkdirSync(UPLOAD_TMP, { recursive: true });
 if (!fs.existsSync(CONFIG_FILE)) fs.copyFileSync(CONFIG_EXAMPLE, CONFIG_FILE);
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
@@ -307,6 +316,8 @@ app.get('/api/state', (req, res) => {
     notes: state.notes.filter((n) => new Date(n.expires).getTime() > Date.now()),
     alerts: alertsCache.alerts,
     photos: listPhotos(),
+    videos: listVideos(),
+    videoSound: config.videoSound === true,
     recentGroceries: recentGroceries(),
   });
 });
@@ -564,32 +575,68 @@ app.delete('/api/notes/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// Photos
+// Photos and videos (both live in data/photos)
+const PHOTO_EXT = /\.(jpe?g|png|webp|gif)$/i;
+const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
+const MEDIA_TYPES = {
+  'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif',
+  'video/mp4': '.mp4', 'video/x-m4v': '.m4v', 'video/quicktime': '.mov', 'video/webm': '.webm',
+};
+const MAX_UPLOAD_MB = 500; // phone videos are big; a minute of 4K is several hundred MB
+// "photos" are the files themselves; "posters" are optional stills the phone grabs from each video
+// (named "<index>.jpg", matching the video's place in "photos") so the grid needn't download videos.
 const upload = multer({
   storage: multer.diskStorage({
-    destination: PHOTO_DIR,
+    destination: (req, file, cb) => cb(null, file.fieldname === 'posters' ? UPLOAD_TMP : PHOTO_DIR),
     filename: (req, file, cb) => {
-      const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
+      let ext = path.extname(file.originalname).toLowerCase();
+      if (!PHOTO_EXT.test(ext) && !VIDEO_EXT.test(ext)) ext = MEDIA_TYPES[file.mimetype];
       cb(null, `${Date.now()}-${id()}${ext}`);
     },
   }),
-  limits: { fileSize: 25 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => cb(null, /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)),
+  limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, file.fieldname === 'posters' ? file.mimetype === 'image/jpeg' : !!MEDIA_TYPES[file.mimetype]),
 });
-// A fingerprint of every photo's contents, so the same photo isn't added twice.
+
+// Thumbnails: about 20 KB instead of a several-MB photo. Made the first time they're asked for,
+// then kept in data/thumbs. Videos only have one if the phone sent a still when uploading.
+const thumbPath = (name) => path.join(THUMB_DIR, `${name}.jpg`);
+async function makeThumb(input, out) {
+  const tmp = `${out}.${id()}.tmp`;
+  await sharp(input, { failOn: 'none' }).rotate().resize(360, 360, { fit: 'cover' }).jpeg({ quality: 72, mozjpeg: true }).toFile(tmp);
+  fs.renameSync(tmp, out);
+}
+const making = new Map(); // one job per thumbnail, even if the grid asks twice at once
+app.get('/thumbs/:name', async (req, res) => {
+  const name = path.basename(req.params.name);
+  const out = thumbPath(name);
+  if (!fs.existsSync(out)) {
+    const src = path.join(PHOTO_DIR, name);
+    if (!PHOTO_EXT.test(name) || !fs.existsSync(src)) return res.sendStatus(404);
+    if (!sharp) return res.sendFile(src, { maxAge: '1d' });
+    if (!making.has(name)) making.set(name, makeThumb(src, out).finally(() => making.delete(name)));
+    try { await making.get(name); } catch { return res.sendStatus(404); }
+  }
+  res.sendFile(out, { maxAge: '30d', immutable: true }); // names never change, so phones can keep them
+});
+// A fingerprint of every file's contents, so the same photo or video isn't added twice.
+// Read in pieces, so a big video isn't loaded into memory all at once.
 const PHOTO_INDEX = path.join(DATA_DIR, 'photo-index.json');
-const hashFile = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const hashFile = (file) => new Promise((resolve, reject) => {
+  const h = crypto.createHash('sha256');
+  fs.createReadStream(file).on('data', (d) => h.update(d)).on('end', () => resolve(h.digest('hex'))).on('error', reject);
+});
 let photoIndex = {};
 try { photoIndex = JSON.parse(fs.readFileSync(PHOTO_INDEX, 'utf8')); } catch { /* rebuilt below */ }
-function syncPhotoIndex(exclude = new Set()) {
-  // Picks up photos copied into the folder by hand and forgets deleted ones.
+async function syncPhotoIndex(exclude = new Set()) {
+  // Picks up files copied into the folder by hand and forgets deleted ones.
   // `exclude` is the files of an upload in progress, which are checked separately.
-  const names = new Set(listPhotos().filter((n) => !exclude.has(n)));
+  const names = new Set([...listPhotos(), ...listVideos()].filter((n) => !exclude.has(n)));
   let changed = false;
   for (const name of Object.keys(photoIndex)) if (!names.has(name)) { delete photoIndex[name]; changed = true; }
   for (const name of names) {
     if (photoIndex[name]) continue;
-    try { photoIndex[name] = hashFile(path.join(PHOTO_DIR, name)); changed = true; } catch { /* unreadable; skip */ }
+    try { photoIndex[name] = await hashFile(path.join(PHOTO_DIR, name)); changed = true; } catch { /* unreadable; skip */ }
   }
   if (changed) savePhotoIndex();
 }
@@ -600,28 +647,45 @@ function savePhotoIndex() {
 }
 syncPhotoIndex();
 
-app.post('/api/photos', upload.array('photos', 50), (req, res) => {
-  syncPhotoIndex(new Set((req.files || []).map((f) => f.filename)));
-  const known = new Set(Object.values(photoIndex));
-  let added = 0;
-  const skipped = [];
-  for (const f of req.files || []) {
-    const hash = hashFile(f.path);
-    if (known.has(hash)) {
-      fs.rmSync(f.path, { force: true });
-      skipped.push(f.originalname);
-    } else {
+// Multer's own errors (e.g. a file over the size limit) come back as a message the phone can show.
+function receiveUpload(req, res, next) {
+  upload.fields([{ name: 'photos', maxCount: 50 }, { name: 'posters', maxCount: 50 }])(req, res, (err) => {
+    if (!err) return next();
+    for (const f of Object.values(req.files || {}).flat()) fs.rmSync(f.path, { force: true });
+    const tooBig = err.code === 'LIMIT_FILE_SIZE';
+    res.status(tooBig ? 413 : 400).json({ error: tooBig ? `A file is over ${MAX_UPLOAD_MB} MB.` : 'Upload failed.' });
+  });
+}
+app.post('/api/photos', receiveUpload, async (req, res) => {
+  const files = (req.files && req.files.photos) || [];
+  const posters = Object.fromEntries(((req.files && req.files.posters) || []).map((p) => [parseInt(p.originalname, 10), p]));
+  try {
+    await syncPhotoIndex(new Set(files.map((f) => f.filename)));
+    const known = new Set(Object.values(photoIndex));
+    let added = 0;
+    const skipped = [];
+    for (const [i, f] of files.entries()) {
+      const hash = await hashFile(f.path);
+      if (known.has(hash)) {
+        fs.rmSync(f.path, { force: true });
+        skipped.push(f.originalname);
+        continue;
+      }
       known.add(hash);
       photoIndex[f.filename] = hash;
       added++;
+      if (sharp && VIDEO_EXT.test(f.filename) && posters[i]) await makeThumb(posters[i].path, thumbPath(f.filename)).catch(() => {});
     }
+    savePhotoIndex();
+    version++;
+    res.json({ ok: true, added, skipped });
+  } finally {
+    for (const p of Object.values(posters)) fs.rmSync(p.path, { force: true });
   }
-  savePhotoIndex();
-  version++;
-  res.json({ ok: true, added, skipped });
 });
 app.delete('/api/photos/:name', (req, res) => {
   const name = path.basename(req.params.name);
+  fs.rmSync(thumbPath(name), { force: true });
   fs.rm(path.join(PHOTO_DIR, name), { force: true }, () => {
     delete photoIndex[name];
     savePhotoIndex();
@@ -629,13 +693,10 @@ app.delete('/api/photos/:name', (req, res) => {
     res.json({ ok: true });
   });
 });
-function listPhotos() {
-  return fs
-    .readdirSync(PHOTO_DIR)
-    .filter((f) => /\.(jpe?g|png|webp|gif)$/i.test(f))
-    .sort()
-    .reverse();
-}
+// Newest first (uploads are named by the time they were added).
+function listMedia(pattern) { return fs.readdirSync(PHOTO_DIR).filter((f) => pattern.test(f)).sort().reverse(); }
+function listPhotos() { return listMedia(PHOTO_EXT); }
+function listVideos() { return listMedia(VIDEO_EXT); }
 
 app.post('/api/calendar/refresh', async (req, res) => {
   await refreshCalendars();
@@ -658,8 +719,10 @@ setInterval(refreshAlerts, 5 * 60 * 1000);
 prune();
 setInterval(prune, 15 * 60 * 1000);
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Kitchen Hub running:`);
   console.log(`  Display:  http://localhost:${PORT}`);
   console.log(`  Phone:    http://${lanAddress()}:${PORT}/phone`);
 });
+// Node gives up on a request after 5 minutes; uploading a few big videos over Wi-Fi can take longer.
+server.requestTimeout = 60 * 60 * 1000;

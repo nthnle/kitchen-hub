@@ -13,6 +13,7 @@
   "weather": { "latitude": 40.71, "longitude": -74.01, "units": "fahrenheit" },
   "photoFrameAfterMinutes": 5,
   "slideSeconds": 8,
+  "videoSound": false,
   "screenOffAt": "0:00",
   "showCountdownsWithinDays": 30,
   "trash": [

@@ -960,27 +960,52 @@ async function loadPhoto(name) {
   if (!blob) return { name, src: img.src, ratio };
   return { name, src: URL.createObjectURL(blob), ratio, temp: true };
 }
-// Free the shrunk copies once a slide is gone.
+// Videos play full screen, start to finish, then the slideshow moves on.
+// Checks the video can actually play here first (e.g. an iPhone's HEVC video may not play in Edge),
+// and remembers the ones that can't so they're skipped from then on.
+const isVideoName = (name) => /\.(mp4|m4v|mov|webm)$/i.test(name);
+const unplayable = new Set();
+async function loadVideo(name) {
+  const v = document.createElement('video');
+  v.preload = 'metadata';
+  v.muted = true;
+  const ok = await withTimeout(new Promise((resolve) => {
+    v.onloadedmetadata = () => resolve(v.videoWidth > 0);
+    v.onerror = () => resolve(false);
+    v.src = `/photos/${encodeURIComponent(name)}`;
+  }), 15000);
+  const item = ok ? { name, video: true, src: v.src, ratio: v.videoWidth / v.videoHeight } : null;
+  v.removeAttribute('src'); v.load(); // let go of the file
+  if (!item) { unplayable.add(name); console.warn(`Can't play ${name} on this PC; skipping it.`); }
+  return item;
+}
+const frameMedia = () => [...S.photos, ...(S.videos || []).filter((v) => !unplayable.has(v))];
+// Free the shrunk copies, and stop any video, once a slide is gone.
 function discardSlide(slide) {
   (slide.tempUrls || []).forEach((u) => URL.revokeObjectURL(u));
+  slide.querySelectorAll('video').forEach((v) => { v.pause(); v.removeAttribute('src'); v.load(); });
   slide.remove();
 }
 // Keep a few photos loaded ahead, so the layout can be chosen by their shapes.
 function fillBuffer(n = 4) {
   return (filling ||= (async () => {
     for (let tries = 0; photoBuffer.length < n && tries < n * 3; tries++) {
-      if (!photoQueue.length) photoQueue = shuffled(S.photos.filter((p) => !photoBuffer.some((b) => b.name === p)));
+      if (!photoQueue.length) photoQueue = shuffled(frameMedia().filter((p) => !photoBuffer.some((b) => b.name === p)));
       if (!photoQueue.length) break;
-      const p = await loadPhoto(photoQueue.shift());
+      const name = photoQueue.shift();
+      const p = isVideoName(name) ? await loadVideo(name) : await loadPhoto(name);
       if (p) photoBuffer.push(p);
     }
   })().finally(() => { filling = null; }));
 }
 
-const isPortrait = (p) => p.ratio < 0.9;
+const isPortrait = (p) => !p.video && p.ratio < 0.9;
 function takeLayout() {
   slideCount++;
-  if (slideCount % COLLAGE_EVERY === 0 && photoBuffer.length >= 3) return { kind: 'collage', photos: photoBuffer.splice(0, 3) };
+  if (photoBuffer[0].video) return { kind: 'video', photos: photoBuffer.splice(0, 1) };
+  if (slideCount % COLLAGE_EVERY === 0 && photoBuffer.length >= 3 && !photoBuffer.slice(0, 3).some((p) => p.video)) {
+    return { kind: 'collage', photos: photoBuffer.splice(0, 3) };
+  }
   if (isPortrait(photoBuffer[0])) {
     const portraits = photoBuffer.filter(isPortrait);
     const wide = innerWidth / innerHeight > 1.5;
@@ -993,6 +1018,11 @@ function takeLayout() {
 
 function buildSlide(layout) {
   const ratio = innerWidth / innerHeight;
+  if (layout.kind === 'video') {
+    const v = el('video', { src: layout.photos[0].src, preload: 'auto', playsinline: '', class: 'vid' });
+    v.muted = !S.videoSound; // sound is off unless "videoSound": true in config.json
+    return el('div', { class: 'slide video' }, el('div', { class: 'cell' }, v));
+  }
   return el('div', { class: `slide ${layout.kind}` }, layout.photos.map((p) => {
     // A photo on its own that doesn't match the screen's shape is shown whole,
     // over a blurred copy of itself instead of black bars.
@@ -1012,20 +1042,40 @@ async function showNext(run) {
   const slide = buildSlide(layout);
   slide.tempUrls = layout.photos.filter((p) => p.temp).map((p) => p.src);
   slide.style.setProperty('--dur', `${ms + 2000}ms`);
-  // Decode fully before fading in, so a photo never appears half-drawn.
-  await withTimeout(Promise.all([...slide.querySelectorAll('img')].map((i) => i.decode().catch(() => {}))), 2000);
+  const video = slide.querySelector('video');
+  if (video) {
+    // Buffer enough to start smoothly before fading in.
+    const ready = await withTimeout(new Promise((r) => { video.oncanplay = () => r(true); video.onerror = () => r(false); }), 10000);
+    if (run !== frameRun) return discardSlide(slide);
+    if (!ready) { unplayable.add(layout.photos[0].name); discardSlide(slide); return showNext(run); }
+  } else {
+    // Decode fully before fading in, so a photo never appears half-drawn.
+    await withTimeout(Promise.all([...slide.querySelectorAll('img')].map((i) => i.decode().catch(() => {}))), 2000);
+  }
   if (run !== frameRun) return discardSlide(slide);
   const box = document.querySelector('#frame .slides');
   const old = [...box.children];
   box.append(slide);
   requestAnimationFrame(() => requestAnimationFrame(() => slide.classList.add('on')));
   setTimeout(() => old.forEach(discardSlide), 1600);
-  frameTimer = setTimeout(() => showNext(run), ms);
+  if (video) playSlideVideo(video, run);
+  else frameTimer = setTimeout(() => showNext(run), ms);
   fillBuffer(); // load the next photos while this slide is up
+}
+// Plays the whole video, then moves on. If the browser won't start it with sound
+// (no one has touched the screen since it loaded), it plays muted instead.
+function playSlideVideo(v, run) {
+  let moved = false;
+  const next = () => { if (moved || run !== frameRun) return; moved = true; clearTimeout(frameTimer); showNext(run); };
+  v.onended = next;
+  v.onerror = next;
+  v.play().catch(() => { v.muted = true; return v.play(); }).catch(next);
+  // In case it stalls: give up a little after it should have finished.
+  if (Number.isFinite(v.duration)) frameTimer = setTimeout(next, v.duration * 1000 + 30000);
 }
 
 function startFrame(manual) {
-  if (!S || !S.photos.length) {
+  if (!S || !frameMedia().length) {
     if (manual) alert('No photos yet. Add some from your phone.');
     return;
   }

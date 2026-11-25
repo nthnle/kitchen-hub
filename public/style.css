@@ -547,6 +547,7 @@ body:has(.status-badge:not([hidden])) .decor-corner.left { display: none; }
 /* Each photo gets its own GPU layer so zooming one doesn't redraw the rest. */
 .cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; backface-visibility: hidden; }
 .cell img.fit { object-fit: contain; }
+.cell .vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 .cell .blur { position: absolute; inset: -60px; background: center / cover no-repeat; filter: blur(40px) brightness(0.5); will-change: transform; }
 /* slow zoom ("Ken Burns"), toward a different corner each time */
 .kb { animation: kenburns var(--dur, 14s) ease-out forwards; }
@@ -644,7 +645,14 @@ form [hidden] { display: none !important; }
 .upload span { display: inline-block; }
 .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 0.8rem; }
 .thumb { position: relative; aspect-ratio: 1; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; cursor: pointer; }
+.thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; cursor: pointer; display: block; background: #2B2420; pointer-events: none; }
+.thumb { cursor: pointer; border-radius: 10px; background: color-mix(in srgb, var(--muted) 18%, transparent); }
+.thumb.no-thumb.is-video { background: #2B2420; }
+.play-badge {
+  position: absolute; left: 6px; bottom: 6px; width: 1.8rem; height: 1.8rem; border-radius: 50%;
+  display: grid; place-items: center; background: rgb(0 0 0 / 0.55); color: #fff; font-size: 0.75rem; padding-left: 2px; pointer-events: none;
+}
+.photo-view video { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border-radius: 10px; background: #000; }
 .photo-view { border: 0; border-radius: 16px; padding: 12px; max-width: 94vw; background: var(--panel); color: var(--ink); }
 .photo-view::backdrop { background: rgb(0 0 0 / 0.75); }
 .photo-view img { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border-radius: 10px; }
