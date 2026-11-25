@@ -389,6 +389,9 @@ body.dusk .holiday-chip { background: color-mix(in srgb, var(--hc) 30%, var(--pa
 .ag-time { width: 4.8em; font-size: 0.9em; color: var(--muted); flex: none; }
 .ag-dot { width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--c); flex: none; }
 .ag-title { font-size: 1.15em; font-weight: 600; }
+.ag-next { margin-top: 0.5em; padding-top: 0.55em; border-top: 1px solid var(--line, rgba(0,0,0,0.08)); }
+.ag-next h3 { margin: 0 0 0.15em; font-size: 0.9em; font-weight: 600; color: var(--muted); }
+.ag-more { border: 0; background: none; font: inherit; font-size: 0.9em; color: var(--muted); padding: 0.2em 0; cursor: pointer; text-align: left; }
 
 /* evening */
 .home-evening { height: 100%; display: flex; flex-direction: column; gap: 1.1em; }

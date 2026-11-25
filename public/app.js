@@ -458,11 +458,19 @@ function choreBoard() {
         }));
     })));
 }
-// Today's events as a short list, for the side column on quiet days.
+// Today's events as a short list, for the side column on quiet days. When today has little left,
+// tomorrow's events (with times) follow, so there's time to get ready for them.
 function todayCard(d) {
   const items = eventsOn(d).filter((e) => e.allDay || new Date(e.end) > d);
+  const tmr = addDays(d, 1);
+  const next = items.length <= 1 ? eventsOn(tmr) : [];
+  const shown = next.slice(0, next.length > 3 ? 2 : 3);
   return el('section', { class: 'card-w' }, el('h2', {}, 'Today'),
-    items.length ? agendaList(d, items) : el('p', { class: 'muted' }, 'Nothing else on the calendar'));
+    items.length ? agendaList(d, items) : el('p', { class: 'muted' }, 'Nothing else on the calendar'),
+    next.length ? el('div', { class: 'ag-next' },
+      el('h3', {}, `Tomorrow · ${tmr.toLocaleDateString([], { weekday: 'long' })}`),
+      agendaList(d, shown),
+      next.length > shown.length ? el('button', { class: 'ag-more', onclick: () => showView('calendar') }, `+${next.length - shown.length} more`) : null) : null);
 }
 function homeDay(d) {
   const out = rainOutlook(d);
