@@ -6,23 +6,31 @@ const crypto = require('crypto');
 const os = require('os');
 const express = require('express');
 const multer = require('multer');
+const { spawn } = require('child_process');
 const ical = require('node-ical');
 // Makes the phone page's thumbnails. If it isn't installed yet (pulled an update but didn't run
 // npm install), the grid falls back to the full-size photos instead of the server failing to start.
 let sharp = null;
 try { sharp = require('sharp'); } catch { console.warn('sharp is missing: run "npm install" for fast photo thumbnails.'); }
+// Converts videos into a light copy for the slideshow (see "slideshow copies of videos" below).
+let ffmpeg = null;
+try { ffmpeg = require('ffmpeg-static'); if (!ffmpeg || !fs.existsSync(ffmpeg)) ffmpeg = null; } catch { /* not installed */ }
+if (!ffmpeg) console.warn('ffmpeg-static is missing: run "npm install" so slideshow videos play smoothly.');
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
 const PHOTO_DIR = path.join(DATA_DIR, 'photos');
 const THUMB_DIR = path.join(DATA_DIR, 'thumbs'); // small copies for the phone page's grid
 const UPLOAD_TMP = path.join(DATA_DIR, 'upload-tmp'); // video stills on their way to thumbs/
+const SLIDE_DIR = path.join(DATA_DIR, 'slideshow'); // 1080p 30 fps copies of videos, for the kitchen screen
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 const CONFIG_FILE = path.join(ROOT, 'config.json');
 const CONFIG_EXAMPLE = path.join(ROOT, 'config.example.json');
 
 fs.mkdirSync(PHOTO_DIR, { recursive: true });
 fs.mkdirSync(THUMB_DIR, { recursive: true });
+fs.mkdirSync(SLIDE_DIR, { recursive: true });
+for (const f of fs.readdirSync(SLIDE_DIR)) if (f.endsWith('.tmp.mp4')) fs.rmSync(path.join(SLIDE_DIR, f), { force: true }); // cut off mid-conversion
 fs.rmSync(UPLOAD_TMP, { recursive: true, force: true }); // leftovers from an interrupted upload
 fs.mkdirSync(UPLOAD_TMP, { recursive: true });
 if (!fs.existsSync(CONFIG_FILE)) fs.copyFileSync(CONFIG_EXAMPLE, CONFIG_FILE);
@@ -318,7 +326,10 @@ app.get('/api/state', (req, res) => {
     photos: listPhotos(),
     videos: listVideos(),
     // Videos still without a thumbnail; the kitchen screen makes them (see makeStills in app.js).
-    needStill: sharp ? listVideos().filter((n) => !fs.existsSync(thumbPath(n))) : [],
+    // (With ffmpeg the server makes them itself, so only videos it couldn't convert are left to the screen.)
+    needStill: sharp ? listVideos().filter((n) => !fs.existsSync(thumbPath(n)) && (!ffmpeg || convertFailed.has(n))) : [],
+    // Videos the slideshow should wait for while their light copy is made (null: no ffmpeg, play originals).
+    videosConverting: ffmpeg ? listVideos().filter((n) => !slideReady(n) && !convertFailed.has(n)) : null,
     videoSound: config.videoSound === true,
     recentGroceries: recentGroceries(),
   });
@@ -630,6 +641,60 @@ app.post('/api/thumbs/:name', express.raw({ type: 'image/jpeg', limit: '2mb' }),
   version++;
   res.json({ ok: true });
 });
+// ---------- slideshow copies of videos ----------
+// Phones record at 60 or 120 fps (slow motion), sometimes in HEVC, which the kitchen PC's 2014 graphics
+// can't decode smoothly. Each video gets a 1080p 30 fps H.264 copy for the slideshow, one at a time,
+// in the background at low priority; the original stays as it is for the phone page.
+const slidePath = (name) => path.join(SLIDE_DIR, `${name.replace(/\.[^.]+$/, '')}.mp4`);
+const slideReady = (name) => fs.existsSync(slidePath(name));
+const convertFailed = new Set(); // couldn't be converted; the slideshow uses the original instead
+let converting = null;
+function runFfmpeg(args, wantStdout) {
+  return new Promise((resolve, reject) => {
+    const p = spawn(ffmpeg, ['-hide_banner', '-loglevel', 'error', ...args], { windowsHide: true });
+    try { os.setPriority(p.pid, os.constants.priority.PRIORITY_LOW); } catch { /* not allowed; fine */ }
+    const out = [], err = [];
+    p.stdout.on('data', (d) => wantStdout && out.push(d));
+    p.stderr.on('data', (d) => err.push(d));
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(Buffer.concat(out)) : reject(new Error(Buffer.concat(err).toString().trim().slice(-300) || `exit ${code}`))));
+  });
+}
+async function convertNext() {
+  if (!ffmpeg || converting) return;
+  const name = listVideos().find((n) => !slideReady(n) && !convertFailed.has(n));
+  if (!name) return;
+  converting = name;
+  const src = path.join(PHOTO_DIR, name), out = slidePath(name), tmp = out.replace(/\.mp4$/, '.tmp.mp4');
+  try {
+    await runFfmpeg(['-y', '-i', src, '-map', '0:v:0', '-map', '0:a:0?',
+      '-vf', "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30,format=yuv420p",
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '22', '-profile:v', 'high', '-level', '4.1',
+      '-c:a', 'aac', '-b:a', '128k', '-ac', '2', '-movflags', '+faststart', '-threads', '2', tmp]);
+    if (!fs.existsSync(src)) throw new Error('deleted while converting');
+    fs.renameSync(tmp, out);
+    // A thumbnail for the phone page's grid, from the new copy, if it doesn't have one yet.
+    if (sharp && !fs.existsSync(thumbPath(name))) {
+      const still = await runFfmpeg(['-ss', '0.5', '-i', out, '-frames:v', '1', '-f', 'image2pipe', '-vcodec', 'mjpeg', 'pipe:1'], true).catch(() => null);
+      if (still && still.length) await makeThumb(still, thumbPath(name)).catch(() => {});
+    }
+  } catch (e) {
+    fs.rmSync(tmp, { force: true });
+    if (fs.existsSync(src)) { convertFailed.add(name); console.warn(`Couldn't convert ${name} for the slideshow: ${e.message}`); }
+  }
+  converting = null;
+  version++;
+  convertNext();
+}
+// The slideshow plays the light copy once it's ready, and the original otherwise.
+app.get('/video/:name', (req, res) => {
+  const name = path.basename(req.params.name);
+  if (!VIDEO_EXT.test(name)) return res.sendStatus(404);
+  const file = slideReady(name) ? slidePath(name) : path.join(PHOTO_DIR, name);
+  if (!fs.existsSync(file)) return res.sendStatus(404);
+  res.sendFile(file, { maxAge: '1d' });
+});
+
 // A fingerprint of every file's contents, so the same photo or video isn't added twice.
 // Read in pieces, so a big video isn't loaded into memory all at once.
 const PHOTO_INDEX = path.join(DATA_DIR, 'photo-index.json');
@@ -690,6 +755,7 @@ app.post('/api/photos', receiveUpload, async (req, res) => {
     savePhotoIndex();
     version++;
     res.json({ ok: true, added, skipped });
+    convertNext();
   } finally {
     for (const p of Object.values(posters)) fs.rmSync(p.path, { force: true });
   }
@@ -697,6 +763,7 @@ app.post('/api/photos', receiveUpload, async (req, res) => {
 app.delete('/api/photos/:name', (req, res) => {
   const name = path.basename(req.params.name);
   fs.rmSync(thumbPath(name), { force: true });
+  if (VIDEO_EXT.test(name)) fs.rmSync(slidePath(name), { force: true });
   fs.rm(path.join(PHOTO_DIR, name), { force: true }, () => {
     delete photoIndex[name];
     savePhotoIndex();
@@ -734,6 +801,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Kitchen Hub running:`);
   console.log(`  Display:  http://localhost:${PORT}`);
   console.log(`  Phone:    http://${lanAddress()}:${PORT}/phone`);
+  convertNext(); // videos added before this existed, or cut off by a restart
 });
 // Node gives up on a request after 5 minutes; uploading a few big videos over Wi-Fi can take longer.
 server.requestTimeout = 60 * 60 * 1000;

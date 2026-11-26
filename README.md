@@ -14,7 +14,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Notes.** Post a note from your phone, or with *+ Add a note* on the kitchen screen ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
-- **Photo frame.** Upload photos and videos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side. Videos play full screen from start to finish, muted unless you turn sound on.
+- **Photo frame.** Upload photos and videos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side. Videos play full screen from start to finish, muted unless you turn sound on. The PC makes a light 1080p, 30 fps copy of each video for the slideshow (phones often record at 60 or 120 fps, which older PCs can't play smoothly), so a new video joins the slideshow a minute or so after it's uploaded.
 - **On your phone, anywhere.** The phone page has the same Today, Calendar, Chores and Groceries as the kitchen screen, with the editors under *More*. It keeps the last copy on the phone, so the grocery list still works in a store with no signal and syncs what you check off once you’re back online.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
@@ -195,7 +195,8 @@ Under *More*:
 - **"Couldn't update the calendar":** the calendar link in `config.json` is wrong or was reset. Copy it again.
 - **"Can't reach the Kitchen Hub server":** check `data\server-error.log`. The server restarts itself within a few seconds if it stops.
 - **Slideshow flickers on an older PC:** update the graphics driver. Photos are already shrunk to screen size before they're shown.
-- **A video never shows in the slideshow:** the PC can't play its format, so it's skipped. iPhones record in HEVC by default, which Edge plays only on some PCs. Try installing *HEVC Video Extensions* from the Microsoft Store, or set the iPhone to *Settings → Camera → Formats → Most Compatible* for future videos. An iPhone can still play it on the phone page.
+- **Slideshow videos stutter:** check that `npm install` has run since you updated; the slideshow plays a light copy of each video, made with ffmpeg. Copies are kept in `dataslideshow`.
+- **A video never shows in the slideshow:** the PC couldn't convert or play it, so it's skipped (`dataserver-error.log` says why). An iPhone can still play it on the phone page.
 
 ## Privacy
 
@@ -209,7 +210,7 @@ Back up the `data` folder to keep your lists, photos and videos.
 
 ## For developers
 
-Requires [Node.js](https://nodejs.org) 18 or newer.
+Requires [Node.js](https://nodejs.org) 20.9 or newer. `npm install` also downloads ffmpeg (via `ffmpeg-static`), used to make the slideshow copies of videos.
 
 ```bash
 npm install

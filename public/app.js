@@ -972,7 +972,7 @@ async function loadVideo(name) {
   const ok = await withTimeout(new Promise((resolve) => {
     v.onloadedmetadata = () => resolve(v.videoWidth > 0);
     v.onerror = () => resolve(false);
-    v.src = `/photos/${encodeURIComponent(name)}`;
+    v.src = `/video/${encodeURIComponent(name)}`; // the light 30 fps copy (see server.js)
   }), 15000);
   const item = ok ? { name, video: true, src: v.src, ratio: v.videoWidth / v.videoHeight } : null;
   v.removeAttribute('src'); v.load(); // let go of the file
@@ -1008,12 +1008,13 @@ async function makeStills() {
     let name;
     while ((name = (S.needStill || []).find((n) => !stillTried.has(n)))) {
       stillTried.add(name); // one try each; a video this PC can't play just keeps the plain tile
-      const blob = await videoStill(`/photos/${encodeURIComponent(name)}`);
+      const blob = await videoStill(`/video/${encodeURIComponent(name)}`);
       if (blob) await fetch(`/api/thumbs/${encodeURIComponent(name)}`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob }).catch(() => {});
     }
   } finally { makingStills = false; }
 }
-const frameMedia = () => [...S.photos, ...(S.videos || []).filter((v) => !unplayable.has(v))];
+// A video joins the slideshow once its light copy is ready, so it never plays the heavy original.
+const frameMedia = () => [...S.photos, ...(S.videos || []).filter((v) => !unplayable.has(v) && !(S.videosConverting || []).includes(v))];
 // Free the shrunk copies, and stop any video, once a slide is gone.
 function discardSlide(slide) {
   (slide.tempUrls || []).forEach((u) => URL.revokeObjectURL(u));
