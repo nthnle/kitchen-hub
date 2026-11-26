@@ -317,6 +317,8 @@ app.get('/api/state', (req, res) => {
     alerts: alertsCache.alerts,
     photos: listPhotos(),
     videos: listVideos(),
+    // Videos still without a thumbnail; the kitchen screen makes them (see makeStills in app.js).
+    needStill: sharp ? listVideos().filter((n) => !fs.existsSync(thumbPath(n))) : [],
     videoSound: config.videoSound === true,
     recentGroceries: recentGroceries(),
   });
@@ -583,8 +585,8 @@ const MEDIA_TYPES = {
   'video/mp4': '.mp4', 'video/x-m4v': '.m4v', 'video/quicktime': '.mov', 'video/webm': '.webm',
 };
 const MAX_UPLOAD_MB = 500; // phone videos are big; a minute of 4K is several hundred MB
-// "photos" are the files themselves; "posters" are optional stills the phone grabs from each video
-// (named "<index>.jpg", matching the video's place in "photos") so the grid needn't download videos.
+// "photos" are the files themselves; "posters" are optional video stills that older phone pages sent
+// (named "<index>.jpg", matching the video's place in "photos"). Stills now come from the kitchen screen.
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => cb(null, file.fieldname === 'posters' ? UPLOAD_TMP : PHOTO_DIR),
@@ -599,7 +601,8 @@ const upload = multer({
 });
 
 // Thumbnails: about 20 KB instead of a several-MB photo. Made the first time they're asked for,
-// then kept in data/thumbs. Videos only have one if the phone sent a still when uploading.
+// then kept in data/thumbs. A video's comes from a still the kitchen screen grabs after it's uploaded
+// (phones were slow at it and iPhones often couldn't), or from an older phone page that sent one.
 const thumbPath = (name) => path.join(THUMB_DIR, `${name}.jpg`);
 async function makeThumb(input, out) {
   const tmp = `${out}.${id()}.tmp`;
@@ -618,6 +621,14 @@ app.get('/thumbs/:name', async (req, res) => {
     try { await making.get(name); } catch { return res.sendStatus(404); }
   }
   res.sendFile(out, { maxAge: '30d', immutable: true }); // names never change, so phones can keep them
+});
+// The kitchen screen sends a still from each new video here.
+app.post('/api/thumbs/:name', express.raw({ type: 'image/jpeg', limit: '2mb' }), async (req, res) => {
+  const name = path.basename(req.params.name);
+  if (!sharp || !VIDEO_EXT.test(name) || !fs.existsSync(path.join(PHOTO_DIR, name)) || !Buffer.isBuffer(req.body) || !req.body.length) return res.sendStatus(400);
+  try { await makeThumb(req.body, thumbPath(name)); } catch { return res.sendStatus(400); }
+  version++;
+  res.json({ ok: true });
 });
 // A fingerprint of every file's contents, so the same photo or video isn't added twice.
 // Read in pieces, so a big video isn't loaded into memory all at once.

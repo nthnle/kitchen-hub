@@ -979,6 +979,40 @@ async function loadVideo(name) {
   if (!item) { unplayable.add(name); console.warn(`Can't play ${name} on this PC; skipping it.`); }
   return item;
 }
+// Thumbnails for the phone page's grid: phones were slow to grab a still from a video before uploading
+// (iPhones often couldn't at all), so the kitchen screen does it once each new video arrives.
+const stillTried = new Set();
+let makingStills = false;
+async function videoStill(src) {
+  const v = document.createElement('video');
+  v.muted = true; v.preload = 'auto';
+  const once = (ev) => new Promise((r) => { v.addEventListener(ev, () => r(true), { once: true }); v.addEventListener('error', () => r(false), { once: true }); });
+  try {
+    const loaded = once('loadeddata');
+    v.src = src;
+    if (!(await withTimeout(loaded, 20000))) return null;
+    const seeked = once('seeked');
+    v.currentTime = Math.min(0.5, (v.duration || 1) / 2);
+    if (!(await withTimeout(seeked, 20000)) || !v.videoWidth) return null;
+    const scale = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    return await withTimeout(new Promise((r) => c.toBlob(r, 'image/jpeg', 0.8)), 10000);
+  } catch { return null; } finally { v.removeAttribute('src'); v.load(); }
+}
+async function makeStills() {
+  if (makingStills) return;
+  makingStills = true;
+  try {
+    let name;
+    while ((name = (S.needStill || []).find((n) => !stillTried.has(n)))) {
+      stillTried.add(name); // one try each; a video this PC can't play just keeps the plain tile
+      const blob = await videoStill(`/photos/${encodeURIComponent(name)}`);
+      if (blob) await fetch(`/api/thumbs/${encodeURIComponent(name)}`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob }).catch(() => {});
+    }
+  } finally { makingStills = false; }
+}
 const frameMedia = () => [...S.photos, ...(S.videos || []).filter((v) => !unplayable.has(v))];
 // Free the shrunk copies, and stop any video, once a slide is gone.
 function discardSlide(slide) {
@@ -1255,6 +1289,7 @@ async function load(force) {
     lastLoadOk = Date.now();
     renderCalendar(); renderChores(); renderGrocery(); renderServices();
     renderAlerts(); renderHome(); renderStatus();
+    makeStills();
   } catch (e) {
     if (Date.now() - lastLoadOk > 15e3) document.getElementById('cal-status').textContent = 'Can’t reach the Kitchen Hub server. Retrying…';
   }}

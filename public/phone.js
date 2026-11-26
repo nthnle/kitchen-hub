@@ -386,42 +386,22 @@ function render() {
 let photoSig = null;
 function renderPhotos() {
   const media = [...S.photos, ...(S.videos || [])].sort().reverse();
-  const sig = media.join('|');
+  // A new video's thumbnail arrives a little after the video (the kitchen screen makes it), so redraw then too.
+  const waiting = new Set(S.needStill || []);
+  const sig = media.join('|') + '#' + [...waiting].join('|');
   if (sig === photoSig) return;
   photoSig = sig;
   const nv = (S.videos || []).length, np = S.photos.length;
   document.getElementById('photo-count').textContent = media.length
     ? `· ${[np ? `${np} photo${np === 1 ? '' : 's'}` : '', nv ? `${nv} video${nv === 1 ? '' : 's'}` : ''].filter(Boolean).join(', ')}` : '';
   document.getElementById('photos').replaceChildren(...media.map((name) =>
-    el('div', { class: `thumb${isVideo(name) ? ' is-video' : ''}`, onclick: () => viewPhoto(name) },
-      // A video uploaded without a still (or before stills existed) gets a plain tile instead.
-      el('img', { src: `/thumbs/${encodeURIComponent(name)}`, loading: 'lazy', decoding: 'async', alt: '',
+    el('div', { class: `thumb${isVideo(name) ? ' is-video' : ''}${waiting.has(name) ? ' no-thumb' : ''}`, onclick: () => viewPhoto(name) },
+      // A video with no still yet (or one the kitchen PC can't play) gets a plain tile instead.
+      waiting.has(name) ? null : el('img', { src: `/thumbs/${encodeURIComponent(name)}`, loading: 'lazy', decoding: 'async', alt: '',
         onerror: (e) => { e.target.closest('.thumb').classList.add('no-thumb'); e.target.remove(); } }),
       isVideo(name) ? el('span', { class: 'play-badge', 'aria-label': 'Video' }, '▶') : null,
       el('button', { class: 'x', title: 'Delete', onclick: (e) => { e.stopPropagation(); deletePhoto(name); } }, '✕'))));
   if (!media.length) document.getElementById('photos').replaceChildren(el('p', { class: 'empty' }, 'No photos or videos yet.'));
-}
-
-// A still from a video, grabbed on the phone before uploading, for the grid's thumbnail.
-// Gives up quietly (no still, plain tile) if the phone can't decode it.
-async function videoPoster(file) {
-  const url = URL.createObjectURL(file);
-  const v = document.createElement('video');
-  v.muted = true; v.playsInline = true; v.preload = 'auto';
-  const once = (ev) => new Promise((r) => { v.addEventListener(ev, () => r(true), { once: true }); v.addEventListener('error', () => r(false), { once: true }); });
-  const timeout = (p) => Promise.race([p, new Promise((r) => setTimeout(() => r(false), 8000))]);
-  try {
-    v.src = url;
-    if (!(await timeout(once('loadeddata')))) return null;
-    const seek = once('seeked');
-    v.currentTime = Math.min(0.5, (v.duration || 1) / 2);
-    if (!(await timeout(seek)) || !v.videoWidth) return null;
-    const scale = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight));
-    const c = document.createElement('canvas');
-    c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
-    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-    return await timeout(new Promise((r) => c.toBlob(r, 'image/jpeg', 0.8)));
-  } catch { return null; } finally { v.removeAttribute('src'); v.load(); URL.revokeObjectURL(url); }
 }
 
 const isVideo = (name) => /\.(mp4|m4v|mov|webm)$/i.test(name);
@@ -545,12 +525,6 @@ document.getElementById('photo-input').addEventListener('change', async (e) => {
   const what = `${files.length} ${files.length > 1 ? 'files' : 'file'}`;
   const form = new FormData();
   files.forEach((f) => form.append('photos', f));
-  if (files.some((f) => f.type.startsWith('video/'))) status.textContent = 'Getting videos ready…';
-  for (const [i, f] of files.entries()) {
-    if (!f.type.startsWith('video/')) continue;
-    const still = await videoPoster(f);
-    if (still) form.append('posters', still, `${i}.jpg`);
-  }
   status.textContent = `Uploading ${what}…`;
   try {
     // XMLHttpRequest rather than fetch, because only it reports upload progress (videos take a while).
