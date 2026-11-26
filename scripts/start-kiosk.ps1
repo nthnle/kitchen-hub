@@ -32,7 +32,9 @@ if (-not (Test-Hub) -and -not (Test-Watchdog)) {
 # --app gives a window with no address bar; --start-fullscreen fills the screen.
 # Streaming links open in a normal Edge window on top, so signing in to Netflix etc. is remembered.
 # --autoplay-policy lets slideshow videos play with sound ("videoSound": true) before anyone has tapped the screen.
-Start-Process msedge -ArgumentList @("--app=http://localhost:$port", '--start-fullscreen', '--no-first-run', '--disable-features=Translate', '--autoplay-policy=no-user-gesture-required')
+# --disable-direct-composition-video-overlays: older Intel graphics flicker when Edge hands videos to the
+# display's video overlay and takes them back (fades, the clock on top); drawing them normally avoids it.
+Start-Process msedge -ArgumentList @("--app=http://localhost:$port", '--start-fullscreen', '--no-first-run', '--disable-features=Translate', '--autoplay-policy=no-user-gesture-required', '--disable-direct-composition-video-overlays')
 
 # Edge ignores --start-fullscreen when it's already running in the background
 # ("startup boost"), so check the window and press F11 for it if needed.

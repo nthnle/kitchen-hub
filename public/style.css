@@ -548,6 +548,11 @@ body:has(.status-badge:not([hidden])) .decor-corner.left { display: none; }
 .cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; backface-visibility: hidden; }
 .cell img.fit { object-fit: contain; }
 .cell .vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+/* Videos flickered on the kitchen PC's old Intel graphics when they sat in a layer kept ready for fading,
+   or had the see-through clock on top, so a video slide drops both once it's up. */
+.slide.video { will-change: auto; }
+.slide.video .cell { contain: none; }
+.frame:has(.slide.video.on) .frame-clock { display: none; }
 .cell .blur { position: absolute; inset: -60px; background: center / cover no-repeat; filter: blur(40px) brightness(0.5); will-change: transform; }
 /* slow zoom ("Ken Burns"), toward a different corner each time */
 .kb { animation: kenburns var(--dur, 14s) ease-out forwards; }
