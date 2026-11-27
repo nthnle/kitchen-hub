@@ -134,7 +134,9 @@ main { grid-area: main; position: relative; overflow: hidden; padding: 0.5rem 2r
 .day-wx { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; font-size: 0.95rem; color: var(--muted); margin: 0 0 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--line); }
 .day-wx .ico { font-size: 1.3rem; }
 .day-events { overflow: hidden; display: flex; flex-direction: column; gap: 0.35rem; }
-.event { background: color-mix(in srgb, var(--c) 14%, var(--mix)); border-radius: 8px; padding: 0.3rem 0.5rem; font-size: 0.85rem; line-height: 1.25; overflow: hidden; }
+.event { background: color-mix(in srgb, var(--c) 14%, var(--mix)); border-radius: 8px; padding: 0.3rem 0.5rem 0.3rem 0.7rem; font-size: 0.85rem; line-height: 1.25; overflow: hidden; box-shadow: inset 4px 0 0 var(--c); }
+/* Today's column is tinted too, so its events sit on a plain card (a peach event would vanish on it). */
+.day.is-today .event { background: color-mix(in srgb, var(--c) 8%, var(--panel)); }
 .event .when { display: block; font-weight: 600; font-size: 0.8em; color: var(--muted); }
 .event .what { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .event.big { font-size: 1.1rem; padding: 0.5rem 0.7rem; margin-bottom: 0.5rem; }
