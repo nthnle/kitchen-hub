@@ -586,9 +586,12 @@ body.phone h1 { font-family: Outfit, sans-serif; font-size: 1.6rem; margin: 0.2e
 body.phone h2 { font-size: 1.15rem; }
 .card { background: var(--panel); border-radius: 20px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow); scroll-margin-top: 1rem; }
 /* tabs along the bottom, like an app */
-body.phone { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom)); }
-body.phone main { padding: 0; overflow: visible; }
-.p-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0.3rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); }
+/* App-style: the page itself never scrolls, only <main> does, and the tabs sit below it in the layout.
+   A fixed tab bar drifted up and left a gap when iPhone browsers shrank their toolbar on scroll. */
+html:has(body.phone) { height: 100%; overflow: hidden; }
+body.phone { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; padding: 0; }
+body.phone main { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 16px 1rem; }
+.p-tabs { flex: none; z-index: 10; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0.3rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); }
 .p-tabs a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem; min-height: 3.1rem; font-size: 0.72rem; font-weight: 500; color: var(--muted); text-decoration: none; }
 .p-tabs a[aria-current] { color: var(--accent); font-weight: 600; }
 .p-tabs svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

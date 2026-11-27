@@ -113,12 +113,12 @@ function route() {
   });
   store.set('kh-tab', tab);
   if (SECTION_TAB[h]) document.getElementById(h).scrollIntoView();
-  else window.scrollTo(0, 0);
+  else document.querySelector('main').scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
 // Tapping the tab you're on goes back to its top.
 document.querySelectorAll('.p-tabs a').forEach((a) => a.addEventListener('click', () => {
-  if (location.hash === `#${a.dataset.tab}`) window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (location.hash === `#${a.dataset.tab}`) document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
 }));
 route();
 
