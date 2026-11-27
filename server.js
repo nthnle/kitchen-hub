@@ -52,7 +52,7 @@ state.notes ||= [];
 state.departures ||= [];
 state.groceryHistory ||= {};
 // Seed quick-add buttons from anything already on the list.
-for (const g of state.grocery) state.groceryHistory[g.text.toLowerCase()] ||= { text: g.text, count: 1, last: 0 };
+for (const g of state.grocery) state.groceryHistory[g.text.toLowerCase()] ||= { text: g.text, count: 1, last: Date.now() };
 function saveState() {
   // Write to a temp file first so a power cut can't leave half a file.
   const tmp = STATE_FILE + '.tmp';
@@ -469,11 +469,16 @@ app.post('/api/grocery', (req, res) => {
   res.json({ ok: true });
 });
 // Most often (and recently) added items that aren't on the list right now.
+// One-offs (added once or twice) stop being suggested a month after they were last added;
+// anything added 3+ times is a regular and stays until someone taps its ✕.
+const ONE_OFF_TIMES = 3;
+const ONE_OFF_DAYS = 30;
 function recentGroceries(limit = 10) {
   const onList = new Set(state.grocery.filter((g) => !g.done).map((g) => g.text.toLowerCase()));
   const weekMs = 7 * 864e5;
+  const cutoff = Date.now() - ONE_OFF_DAYS * 864e5;
   return Object.entries(state.groceryHistory)
-    .filter(([key]) => !onList.has(key))
+    .filter(([key, h]) => !onList.has(key) && (h.count >= ONE_OFF_TIMES || h.last >= cutoff))
     .map(([, h]) => ({ text: h.text, score: h.count + Math.max(0, 4 - (Date.now() - h.last) / weekMs) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
@@ -488,6 +493,12 @@ app.post('/api/grocery/:id/toggle', (req, res) => {
   const item = state.grocery.find((g) => g.id === req.params.id);
   // A phone that was offline sends what it set ({ done }), so a replay can't flip it back.
   if (item) item.done = typeof req.body?.done === 'boolean' ? req.body.done : !item.done;
+  saveState();
+  res.json({ ok: true });
+});
+// Remove one item, checked or not (e.g. added by mistake). POST so a phone's offline queue can replay it.
+app.post('/api/grocery/:id/remove', (req, res) => {
+  state.grocery = state.grocery.filter((g) => g.id !== req.params.id);
   saveState();
   res.json({ ok: true });
 });

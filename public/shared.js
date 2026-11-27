@@ -34,7 +34,12 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// An "Add again" button with a small ✕ beside it that forgets the item.
+const quickChip = (text, onAdd, onForget) => el('span', { class: 'quick-pair' },
+  el('button', { class: 'quick-chip', onclick: onAdd }, `+ ${text}`),
+  el('button', { class: 'quick-forget', title: `Stop suggesting “${text}”`, 'aria-label': `Stop suggesting ${text}`, onclick: onForget }, '✕'));
+
+const DAY_NAMES =['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -118,6 +123,13 @@ function choresForToday(chores, date = new Date()) {
   });
   const rank = (c) => (c.date && c.date < day ? 0 : c.pickup ? 1 : 2);
   return shown.map((c, i) => [rank(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map((x) => x[2]);
+}
+// One-time chores set for tomorrow, shown grayed out under today's so you can see they were added.
+// (Repeating chores and trash aren't included; they'd just repeat today's list.)
+function choresForTomorrow(chores, date = new Date()) {
+  const t = new Date(date); t.setDate(t.getDate() + 1);
+  const day = ymd(t);
+  return chores.filter((c) => c.date === day && !c.pickup);
 }
 // "from yesterday", "from Sat", "from Nov 14" for a chore carried over; "pickup today" for missed trash.
 function lateLabel(c, today = new Date()) {

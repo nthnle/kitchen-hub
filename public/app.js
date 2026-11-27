@@ -105,6 +105,15 @@ function toggleChore(c) {
   act(() => api.send('POST', `/api/chores/${c.id}/toggle`));
   showUndo(`“${c.title}” ${wasDone ? 'unchecked' : 'checked off'}`, () => act(() => api.send('POST', `/api/chores/${c.id}/toggle`)));
 }
+// Grocery items removed on this screen, hidden while their Undo is showing.
+const hiddenGroceries = new Set();
+const groceryItems = () => S.grocery.filter((g) => !hiddenGroceries.has(g.id));
+function removeGrocery(g) {
+  hiddenGroceries.add(g.id);
+  renderAll();
+  showUndo(`“${g.text}” removed`, () => { hiddenGroceries.delete(g.id); renderAll(); },
+    () => act(() => api.send('POST', `/api/grocery/${g.id}/remove`)).then(() => hiddenGroceries.delete(g.id)));
+}
 function toggleGrocery(g) {
   act(() => api.send('POST', `/api/grocery/${g.id}/toggle`));
   showUndo(`“${g.text}” ${g.done ? 'unchecked' : 'checked off'}`, () => act(() => api.send('POST', `/api/grocery/${g.id}/toggle`)));
@@ -135,11 +144,18 @@ function openEvent(e) {
 const eventAttrs = (e) => ({ onclick: (ev) => { ev.stopPropagation(); openEvent(e); }, title: 'Show details' });
 
 // ---------- quick-add groceries ----------
+const forgotten = new Set(); // "Add again" items forgotten on this screen, hidden while their Undo is showing
 function quickAdd(max) {
-  const items = (S.recentGroceries || []).slice(0, max);
+  const items = (S.recentGroceries || []).filter((t) => !forgotten.has(t)).slice(0, max);
   if (!items.length) return null;
   return el('div', { class: 'quick' }, el('span', { class: 'quick-label' }, 'Add again:'),
-    items.map((t) => el('button', { class: 'quick-chip', onclick: () => act(() => api.send('POST', '/api/grocery', { text: t })) }, `+ ${t}`)));
+    items.map((t) => quickChip(t, () => act(() => api.send('POST', '/api/grocery', { text: t })), () => forgetGrocery(t))));
+}
+function forgetGrocery(t) {
+  forgotten.add(t);
+  renderAll();
+  showUndo(`“${t}” won’t be suggested`, () => { forgotten.delete(t); renderAll(); },
+    () => act(() => api.send('DELETE', `/api/grocery-history/${encodeURIComponent(t)}`)).then(() => forgotten.delete(t)));
 }
 
 // ---------- shared pieces ----------
@@ -197,7 +213,7 @@ function countdownCard(max = 3) {
 }
 // What's still on the grocery list, as one short card for the day screen; click it to open the list.
 function groceryCard() {
-  const left = S.grocery.filter((g) => !g.done);
+  const left = groceryItems().filter((g) => !g.done);
   if (!left.length) return null;
   return el('button', { class: 'card-w groc-card', onclick: () => showView('grocery') },
     el('div', { class: 'tl-top' }, el('h2', {}, 'Grocery list'), el('span', { class: 'muted' }, `${left.length} to get`)),
@@ -571,8 +587,8 @@ function homeEvening(d) {
           : el('p', { class: 'empty' }, 'Nothing on the calendar tomorrow'),
         el('div', { class: 'notes' }, notesNodes())),
       el('section', { class: 'card-w' },
-        el('div', { class: 'tl-top' }, el('h2', {}, 'Grocery list'), el('span', { class: 'muted' }, `${S.grocery.filter((g) => !g.done).length} to get`)),
-        S.grocery.length ? el('div', { class: 'groc card-scroll' }, S.grocery.map((g) => el('button', { class: `groc-row${g.done ? ' done' : ''}`, onclick: () => toggleGrocery(g) },
+        el('div', { class: 'tl-top' }, el('h2', {}, 'Grocery list'), el('span', { class: 'muted' }, `${groceryItems().filter((g) => !g.done).length} to get`)),
+        groceryItems().length ? el('div', { class: 'groc card-scroll' }, groceryItems().map((g) => el('button', { class: `groc-row${g.done ? ' done' : ''}`, onclick: () => toggleGrocery(g) },
           el('span', { class: 'groc-check' }, g.done ? icon('check') : null), el('span', {}, g.text))))
           : el('p', { class: 'empty' }, 'The list is empty'),
         quickAdd(6),
@@ -773,10 +789,14 @@ function renderChores() {
   fillChorePeople();
   const box = document.getElementById('chores');
   const todays = choresForToday(allChores(), now());
+  const tomorrows = choresForTomorrow(S.chores, now());
   const names = [...S.people.map((p) => p.name)];
-  if (todays.some((c) => !c.person || !names.includes(c.person))) names.push('');
+  if ([...todays, ...tomorrows].some((c) => !c.person || !names.includes(c.person))) names.push('');
   box.replaceChildren(...names.map((name) => {
-    const mine = todays.filter((c) => (name ? c.person === name : !names.includes(c.person) || !c.person));
+    const isMine = (c) => (name ? c.person === name : !names.includes(c.person) || !c.person);
+    const mine = todays.filter(isMine);
+    const later = tomorrows.filter(isMine).map((c) => el('div', { class: 'chore later' },
+      el('span', { class: 'check' }), el('span', {}, c.title, el('span', { class: 'late-tag' }, 'tomorrow'))));
     const color = name ? personColor(S.people, name) : '#8C8174';
     const doneCount = mine.filter((c) => S.doneToday.includes(c.id)).length;
     return el('div', { class: 'chore-col', style: `--c:${color}` },
@@ -787,7 +807,7 @@ function renderChores() {
         const done = S.doneToday.includes(c.id);
         return el('button', { class: `chore${done ? ' done' : ''}`, onclick: () => toggleChore(c) },
           el('span', { class: 'check' }, done ? icon('check') : null), el('span', {}, c.title, lateTag(c)));
-      }) : el('p', { class: 'empty' }, 'No chores today'));
+      }) : el('p', { class: 'empty' }, 'No chores today'), later);
   }));
   if (!S.chores.length) box.replaceChildren(el('p', { class: 'empty big' }, 'No chores yet. Add some from your phone.'));
 }
@@ -820,11 +840,13 @@ document.getElementById('chore-add').addEventListener('submit', (e) => {
 // ---------- Groceries tab ----------
 function renderGrocery() {
   const ul = document.getElementById('grocery');
-  ul.replaceChildren(...S.grocery.map((g) =>
-    el('li', {}, el('button', { class: `chore${g.done ? ' done' : ''}`, onclick: () => toggleGrocery(g) },
-      el('span', { class: 'check' }, g.done ? icon('check') : null), el('span', {}, g.text)))));
-  if (!S.grocery.length) ul.replaceChildren(el('p', { class: 'empty' }, 'The list is empty.'));
-  document.getElementById('grocery-clear').hidden = !S.grocery.some((g) => g.done);
+  const items = groceryItems();
+  ul.replaceChildren(...items.map((g) =>
+    el('li', { class: 'with-x' }, el('button', { class: `chore${g.done ? ' done' : ''}`, onclick: () => toggleGrocery(g) },
+      el('span', { class: 'check' }, g.done ? icon('check') : null), el('span', {}, g.text)),
+      el('button', { class: 'x', title: `Remove “${g.text}”`, 'aria-label': `Remove ${g.text}`, onclick: () => removeGrocery(g) }, '✕'))));
+  if (!items.length) ul.replaceChildren(el('p', { class: 'empty' }, 'The list is empty.'));
+  document.getElementById('grocery-clear').hidden = !items.some((g) => g.done);
   document.getElementById('grocery-quick').replaceChildren(...[quickAdd(12)].filter(Boolean));
 }
 document.getElementById('grocery-form').addEventListener('submit', (e) => {

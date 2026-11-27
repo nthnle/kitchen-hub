@@ -10,7 +10,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Calendar.** Reads your Google or iCloud calendars (and US holidays). Click an event for its time, place and notes. Events titled `Sam: Soccer` show in Sam's color.
 - **Chores.** Daily, weekly or one-time chores per person, with progress rings and weekly stars. A one-time chore nobody finished carries over to the next day, marked "from Sat", until someone checks it off.
 - **Trash night.** Set your pickup days and "Put out the trash" shows up as a chore the evening before.
-- **Groceries.** A shared list with one-click "Add again" buttons for things you buy often.
+- **Groceries.** A shared list with one-click "Add again" buttons for things you buy often. One-offs drop off a month after they were last added; the ✕ beside a button forgets it right away.
 - **Notes.** Post a note from your phone, or with *+ Add a note* on the kitchen screen ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
@@ -169,21 +169,21 @@ Tabs along the bottom, like an app:
 - **Today:** the weather, notes on the kitchen screen, today’s events (what’s on now is marked), a chore ring for each person and what’s on the grocery list. Weather alerts show here too.
 - **Calendar:** the next 7 days as a list, each with its forecast; *Show the next week* for more.
 - **Chores:** today’s chores, what’s left first. Tap a name to see only theirs, tap a chore to check it off. Shows this week’s stars.
-- **Groceries:** add, check off, *Add again* buttons. Works with no signal (see below).
+- **Groceries:** add, check off, remove with ✕, *Add again* buttons. Works with no signal (see below).
 - **More:** everything you set up once, below.
 
 Under *More*:
 
 - **Notes** for the kitchen, from someone, kept for 1 day, 3 days or a week.
 - **Leave-by times**, e.g. "School drop-off, 7:40, weekdays". Mornings count down to the next one; the rest of the day it appears an hour before. Tick *Skip on days with no school* (ticked for you when the name says "school") and it stays quiet on big holidays like Thanksgiving and Christmas, plus any days off on your [school calendar](#school-calendar).
-- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done), **countdowns** (tick "repeats every year" for birthdays) and **photos and videos** (up to 500 MB each; duplicates are skipped automatically).
+- **Groceries**, **chores** (who, and which days — none means every day; or *just today*, *just tomorrow* or a date for a one-off, which carries over until it's done; the day before, it shows grayed out under today's chores so you can see it's there), **countdowns** (tick "repeats every year" for birthdays) and **photos and videos** (up to 500 MB each; duplicates are skipped automatically).
 - Tap any note, chore, countdown or leave-by time to change it.
 
 **With no signal** (in a store, say), the page shows the last copy it saved, with a banner saying so. Grocery changes are marked *waiting to sync* and go through on their own once the phone reaches the kitchen PC again; other changes need a connection. If the page is already open, or was opened recently, that’s all automatic. To open it from scratch with no signal at all, the page has to come over HTTPS, which [Tailscale can do](#opening-it-with-no-signal).
 
 ### On the kitchen screen
 
-- Check off chores and groceries with a click or tap; a few seconds of **Undo** appear in case of a slip.
+- Check off chores and groceries with a click or tap, or remove a grocery item with its ✕; a few seconds of **Undo** appear in case of a slip.
 - Add groceries and chores directly if the screen has a keyboard.
 - **Watch** opens the service in a normal Edge window; close it (✕ or Alt+F4) to come back.
 

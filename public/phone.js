@@ -32,6 +32,8 @@ function applyOp(st, op) {
     }
   } else if (op.url === '/api/grocery/clear-done') {
     st.grocery = st.grocery.filter((g) => !g.done);
+  } else if (op.url.endsWith('/remove')) {
+    st.grocery = st.grocery.filter((g) => op.url !== `/api/grocery/${g.id}/remove`);
   } else if (m) {
     const g = st.grocery.find((x) => x.id === m[1]);
     if (g) { g.done = op.body.done; g.pending = true; }
@@ -45,6 +47,13 @@ function groceryChange(op) {
     const item = S.grocery.find((g) => g.id === m[1]);
     if (add) add.body.done = op.body.done;
     if (item) item.done = op.body.done;
+    saveQueue(); render(); return;
+  }
+  // Removing an item that was added offline and hasn't synced: just drop the waiting "add".
+  const r = op.url.match(/^\/api\/grocery\/(tmp-[^/]+)\/remove$/);
+  if (r) {
+    queue = queue.filter((q) => q.tmp !== r[1]);
+    S.grocery = S.grocery.filter((g) => g.id !== r[1]);
     saveQueue(); render(); return;
   }
   queue.push(op);
@@ -83,10 +92,12 @@ function setOnline(v) {
   }
 }
 
-function checkItem(text, done, onclick, sub, color) {
-  return el('li', {}, el('button', { class: `chore${done ? ' done' : ''}`, onclick, style: color ? `--c:${color}` : null },
+// onRemove adds a ✕ button beside the row.
+function checkItem(text, done, onclick, sub, color, onRemove) {
+  return el('li', { class: onRemove ? 'with-x' : '' }, el('button', { class: `chore${done ? ' done' : ''}`, onclick, style: color ? `--c:${color}` : null },
     el('span', { class: 'check' }, done ? '✓' : ''),
-    el('span', {}, text, sub ? el('span', { class: 'muted small' }, ` · ${sub}`) : null)));
+    el('span', {}, text, sub ? el('span', { class: 'muted small' }, ` · ${sub}`) : null)),
+    onRemove ? el('button', { class: 'x', title: `Remove “${text}”`, 'aria-label': `Remove ${text}`, onclick: onRemove }, '✕') : null);
 }
 
 // ---------- tabs ----------
@@ -257,6 +268,12 @@ function renderChores() {
     () => act(() => api.send('POST', `/api/chores/${c.id}/toggle`)),
     [choreWho === 'All' ? g.name : '', isDone ? '' : lateLabel(c)].filter(Boolean).join(' · '), g.color)));
   if (!rows.length) t.replaceChildren(el('p', { class: 'empty' }, 'Nothing today.'));
+  // One-time chores for tomorrow, grayed out, so you can see they were added.
+  const names = S.people.map((p) => p.name);
+  t.append(...choresForTomorrow(S.chores, d).filter((c) => choreWho === 'All' || (names.includes(c.person) ? c.person : 'Everyone') === choreWho)
+    .map((c) => el('li', {}, el('div', { class: 'chore later', style: `--c:${personColor(S.people, c.person) || '#8C8174'}` },
+      el('span', { class: 'check' }),
+      el('span', {}, c.title, el('span', { class: 'muted small' }, ` · ${[choreWho === 'All' && names.includes(c.person) ? c.person : '', 'tomorrow'].filter(Boolean).join(' · ')}`))))));
   const stars = S.people.map((p) => [p.name, S.stars[p.name] || 0]).sort((a, b) => b[1] - a[1]);
   document.getElementById('chore-stars').textContent = stars.length ? `★ This week: ${stars.map(([n, s]) => `${n} ${s}`).join(' · ')}` : '';
 }
@@ -310,14 +327,16 @@ function render() {
   const items = [...S.grocery.filter((i) => !i.done), ...S.grocery.filter((i) => i.done)];
   g.replaceChildren(...items.map((i) => checkItem(i.text, i.done,
     () => groceryChange({ url: `/api/grocery/${i.id}/toggle`, body: { done: !i.done } }),
-    i.pending && !online ? 'waiting to sync' : '')));
+    i.pending && !online ? 'waiting to sync' : '', null,
+    () => groceryChange({ url: `/api/grocery/${i.id}/remove`, body: {} }))));
   if (!S.grocery.length) g.replaceChildren(el('p', { class: 'empty' }, 'The list is empty.'));
   const leftN = S.grocery.filter((i) => !i.done).length;
   document.getElementById('grocery-count').textContent = leftN ? `${leftN} to get` : '';
   document.getElementById('grocery-clear').hidden = !S.grocery.some((i) => i.done);
   const recent = (S.recentGroceries || []).filter((t) => !S.grocery.some((i) => !i.done && i.text.toLowerCase() === t.toLowerCase())).slice(0, 10);
   document.getElementById('grocery-quick').replaceChildren(...(recent.length ? [el('div', { class: 'quick' }, el('span', { class: 'quick-label' }, 'Add again:'),
-    recent.map((t) => el('button', { class: 'quick-chip', onclick: () => addGrocery(t) }, `+ ${t}`)))] : []));
+    recent.map((t) => quickChip(t, () => addGrocery(t),
+      () => act(() => api.send('DELETE', `/api/grocery-history/${encodeURIComponent(t)}`)))))] : []));
 
   // People dropdown (keep the current choice)
   const sel = document.getElementById('chore-person');

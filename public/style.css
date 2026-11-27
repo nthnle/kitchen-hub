@@ -168,8 +168,14 @@ main { grid-area: main; position: relative; overflow: hidden; padding: 0.5rem 2r
 .chore.done { border-color: transparent; background: var(--done-bg); }
 .chore.done .check { background: #2F8F5B; border-color: #2F8F5B; }
 .chore.done > span:last-child { text-decoration: line-through; color: var(--done-ink); }
+/* a one-time chore set for tomorrow: shown so you know it's there, but not checkable yet */
+.chore.later { opacity: 0.5; border-style: dashed; background: none; }
 .grocery-wrap { max-width: 44rem; margin: 0 auto; height: 100%; overflow: auto; }
 .checklist { list-style: none; padding: 0; margin: 0.8rem 0; }
+/* a row with a ✕ (remove) button beside it */
+.checklist li.with-x { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.55rem; }
+.checklist li.with-x .chore { flex: 1; min-width: 0; margin-bottom: 0; }
+.checklist li.with-x .x { flex: none; align-self: stretch; border-radius: 12px; font-size: 1.2rem; }
 .add-row { display: flex; gap: 0.5rem; }
 .add-row input { flex: 1; min-width: 0; padding: 0.7rem 0.9rem; border-radius: 12px; border: 1px solid var(--input-border); background: var(--panel); }
 .add-row button, .stack > button, .upload span {
@@ -520,6 +526,10 @@ body:has(.status-badge:not([hidden])) .decor-corner.left { display: none; }
 .quick-label { font-size: 0.85em; color: var(--muted); margin-right: 0.2em; }
 .quick-chip { border: 1px solid var(--input-border); background: var(--panel); border-radius: 999px; padding: 0.35em 0.9em; min-height: 2.3em; font-size: 0.95em; color: var(--ink); }
 .quick-chip:hover { border-color: var(--accent); }
+.quick-pair { display: inline-flex; align-items: stretch; }
+.quick-pair .quick-chip { border-radius: 999px 0 0 999px; padding-right: 0.55em; }
+.quick-forget { border: 1px solid var(--input-border); border-left: 0; background: var(--panel); border-radius: 0 999px 999px 0; padding: 0 0.75em 0 0.5em; min-width: 2.4em; font-size: 0.8em; color: var(--muted); }
+.quick-forget:hover { color: var(--accent); border-color: var(--accent); }
 #grocery-quick .quick { font-size: 1.1rem; }
 
 /* event details */
