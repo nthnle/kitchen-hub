@@ -555,10 +555,13 @@ body:has(.status-badge:not([hidden])) .decor-corner.left { display: none; }
 .slide.row3 { grid-template-columns: 1fr 1fr 1fr; }
 .slide.collage { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
 .slide.collage .cell:first-child { grid-row: span 2; }
-.cell { position: relative; overflow: hidden; min-width: 0; min-height: 0; contain: paint; }
+.cell { position: relative; overflow: hidden; min-width: 0; min-height: 0; contain: paint; background: #000 center / cover no-repeat; }
 /* Each photo gets its own GPU layer so zooming one doesn't redraw the rest. */
 .cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; backface-visibility: hidden; }
 .cell img.fit { object-fit: contain; }
+/* when the photo was taken, bottom right (the clock is bottom left); plain text with a shadow, no blur behind */
+.photo-date { position: absolute; right: 1.1rem; bottom: 0.9rem; color: #fff; font-size: 1.15rem; font-weight: 600; text-shadow: 0 1px 3px rgb(0 0 0 / 0.8), 0 0 12px rgb(0 0 0 / 0.5); pointer-events: none; }
+.slide.row3 .photo-date, .slide.collage .cell:not(:first-child) .photo-date { font-size: 0.95rem; right: 0.7rem; bottom: 0.6rem; }
 .cell .vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 /* Videos flickered on the kitchen PC's old Intel graphics when they sat in a layer kept ready for fading,
    or had the see-through clock on top, so a video slide drops both once it's up. */

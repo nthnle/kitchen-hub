@@ -325,6 +325,8 @@ app.get('/api/state', (req, res) => {
     alerts: alertsCache.alerts,
     photos: listPhotos(),
     videos: listVideos(),
+    // When each was taken, for the date shown on slideshow photos (only the ones that say).
+    photoDates: Object.fromEntries(Object.entries(photoDates).filter(([, d]) => d)),
     // Videos still without a thumbnail; the kitchen screen makes them (see makeStills in app.js).
     // (With ffmpeg the server makes them itself, so only videos it couldn't convert are left to the screen.)
     needStill: sharp ? listVideos().filter((n) => !fs.existsSync(thumbPath(n)) && (!ffmpeg || convertFailed.has(n))) : [],
@@ -706,6 +708,57 @@ app.get('/video/:name', (req, res) => {
   res.sendFile(file, { maxAge: '1d' });
 });
 
+// When each photo or video was taken ('YYYY-MM-DD', or '' if it doesn't say), for the date on slideshow photos.
+// Photos: the earliest date in the camera info (edited photos also carry the edit date).
+// iPhone videos: Apple's own creation date; the general one is when the phone converted it for upload.
+const PHOTO_DATES = path.join(DATA_DIR, 'photo-dates.json');
+let photoDates = {};
+try { photoDates = JSON.parse(fs.readFileSync(PHOTO_DATES, 'utf8')); } catch { /* rebuilt below */ }
+function videoInfo(file) {
+  return new Promise((resolve) => {
+    const p = spawn(ffmpeg, ['-hide_banner', '-i', file], { windowsHide: true });
+    const err = [];
+    p.stderr.on('data', (d) => err.push(d));
+    p.on('error', () => resolve(''));
+    p.on('close', () => resolve(Buffer.concat(err).toString())); // exits with an error (no output file); that's fine
+  });
+}
+async function takenDate(name) {
+  const file = path.join(PHOTO_DIR, name);
+  if (PHOTO_EXT.test(name) && sharp) {
+    const { exif } = await sharp(file, { failOn: 'none' }).metadata();
+    const dates = (exif ? exif.toString('latin1').match(/(19|20)\d\d:\d\d:\d\d \d\d:\d\d:\d\d/g) : null) || [];
+    const first = dates.filter((d) => !d.startsWith('0000')).sort()[0];
+    return first ? first.slice(0, 10).replace(/:/g, '-') : '';
+  }
+  if (VIDEO_EXT.test(name) && ffmpeg) {
+    const m = (await videoInfo(file)).match(/com\.apple\.quicktime\.creationdate\s*:\s*(\d{4}-\d\d-\d\d)/);
+    return m ? m[1] : '';
+  }
+  return '';
+}
+let datingPhotos = false;
+async function syncPhotoDates() {
+  if (datingPhotos) return;
+  datingPhotos = true;
+  try {
+    const names = new Set([...listPhotos(), ...listVideos()]);
+    let changed = false;
+    for (const name of Object.keys(photoDates)) if (!names.has(name)) { delete photoDates[name]; changed = true; }
+    for (const name of names) {
+      if (name in photoDates) continue;
+      try { photoDates[name] = await takenDate(name); } catch { photoDates[name] = ''; }
+      changed = true;
+    }
+    if (changed) {
+      const tmp = PHOTO_DATES + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(photoDates));
+      fs.renameSync(tmp, PHOTO_DATES);
+      version++;
+    }
+  } finally { datingPhotos = false; }
+}
+
 // A fingerprint of every file's contents, so the same photo or video isn't added twice.
 // Read in pieces, so a big video isn't loaded into memory all at once.
 const PHOTO_INDEX = path.join(DATA_DIR, 'photo-index.json');
@@ -766,7 +819,7 @@ app.post('/api/photos', receiveUpload, async (req, res) => {
     savePhotoIndex();
     version++;
     res.json({ ok: true, added, skipped });
-    convertNext();
+    syncPhotoDates().then(convertNext);
   } finally {
     for (const p of Object.values(posters)) fs.rmSync(p.path, { force: true });
   }
@@ -812,7 +865,8 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Kitchen Hub running:`);
   console.log(`  Display:  http://localhost:${PORT}`);
   console.log(`  Phone:    http://${lanAddress()}:${PORT}/phone`);
-  convertNext(); // videos added before this existed, or cut off by a restart
+  // Videos added before this existed, or cut off by a restart; dates for photos added before dates were kept.
+  syncPhotoDates().then(convertNext);
 });
 // Node gives up on a request after 5 minutes; uploading a few big videos over Wi-Fi can take longer.
 server.requestTimeout = 60 * 60 * 1000;

@@ -947,6 +947,10 @@ const slideMs = () => Math.max(3, Number(S && S.slideSeconds) || 8) * 1000;
 const COLLAGE_EXTRA_MS = 3000, COLLAGE_EVERY = 4;
 let frameRun = 0, frameTimer = null, slideCount = 0;
 let photoQueue = [], photoBuffer = [], filling = null;
+// The slides shown so far (newest last), so ← can go back; historyPos is the one on screen.
+let frameHistory = [], historyPos = -1;
+const HISTORY_MAX = 20;
+const freeLayout = (layout) => layout.photos.forEach((p) => { if (p.temp) URL.revokeObjectURL(p.src); });
 
 function shuffled(list) {
   const a = list.slice();
@@ -1037,9 +1041,9 @@ async function makeStills() {
 }
 // A video joins the slideshow once its light copy is ready, so it never plays the heavy original.
 const frameMedia = () => [...S.photos, ...(S.videos || []).filter((v) => !unplayable.has(v) && !(S.videosConverting || []).includes(v))];
-// Free the shrunk copies, and stop any video, once a slide is gone.
+// Stop any video once a slide is gone. (The shrunk photo copies are kept while the slide
+// is in frameHistory, so ← can show it again; freeLayout lets them go.)
 function discardSlide(slide) {
-  (slide.tempUrls || []).forEach((u) => URL.revokeObjectURL(u));
   slide.querySelectorAll('video').forEach((v) => { v.pause(); v.removeAttribute('src'); v.load(); });
   slide.remove();
 }
@@ -1073,6 +1077,12 @@ function takeLayout() {
   return { kind: 'single', photos: photoBuffer.splice(0, 1) };
 }
 
+// When the photo was taken, in its corner ("Nov 15, 2026"); nothing if the photo doesn't say.
+function photoDateTag(name) {
+  const d = S.photoDates && S.photoDates[name];
+  if (!d) return null;
+  return el('span', { class: 'photo-date' }, new Date(`${d}T12:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }));
+}
 function buildSlide(layout) {
   const ratio = innerWidth / innerHeight;
   if (layout.kind === 'video') {
@@ -1084,20 +1094,41 @@ function buildSlide(layout) {
     // A photo on its own that doesn't match the screen's shape is shown whole,
     // over a blurred copy of itself instead of black bars.
     const fit = layout.kind === 'single' && Math.abs(p.ratio - ratio) / ratio > 0.15;
-    return el('div', { class: 'cell' },
+    // Behind a zooming photo sits a still copy of it: older Intel graphics can leave a thin gap between the
+    // strips it draws the zoom in, which showed as a flickering black line; now the gap shows the photo.
+    return el('div', { class: 'cell', style: fit ? null : `background-image:url("${p.src}")` },
       fit ? el('div', { class: 'blur', style: `background-image:url("${p.src}")` }) : null,
-      el('img', { src: p.src, alt: '', class: `kb kb${Math.floor(Math.random() * 4)}${fit ? ' fit' : ''}` }));
+      el('img', { src: p.src, alt: '', class: `kb kb${Math.floor(Math.random() * 4)}${fit ? ' fit' : ''}` }),
+      photoDateTag(p.name));
   }));
 }
 
 async function showNext(run) {
+  // After going back with ←, → steps forward through what was already shown before picking new photos.
+  if (historyPos < frameHistory.length - 1) return showSlide(frameHistory[++historyPos], run);
   await fillBuffer();
   if (run !== frameRun) return; // slideshow was stopped meanwhile
   if (!photoBuffer.length) return stopFrame();
   const layout = takeLayout();
+  frameHistory.push(layout);
+  while (frameHistory.length > HISTORY_MAX) freeLayout(frameHistory.shift());
+  historyPos = frameHistory.length - 1;
+  return showSlide(layout, run);
+}
+function showPrev(run) {
+  if (historyPos <= 0) return showSlide(frameHistory[historyPos], run); // nothing earlier: stay on this one
+  return showSlide(frameHistory[--historyPos], run);
+}
+// ← and → while the slideshow is up. Starting a new run cancels the current slide's timer and any slide still loading.
+function stepFrame(dir) {
+  if (historyPos < 0) return;
+  clearTimeout(frameTimer);
+  const run = ++frameRun;
+  if (dir > 0) showNext(run); else showPrev(run);
+}
+async function showSlide(layout, run) {
   const ms = slideMs() + (layout.kind === 'collage' ? COLLAGE_EXTRA_MS : 0);
   const slide = buildSlide(layout);
-  slide.tempUrls = layout.photos.filter((p) => p.temp).map((p) => p.src);
   slide.style.setProperty('--dur', `${ms + 2000}ms`);
   const video = slide.querySelector('video');
   if (video) {
@@ -1148,6 +1179,9 @@ function stopFrame() {
   const f = document.getElementById('frame');
   f.hidden = true;
   [...f.querySelector('.slides').children].forEach(discardSlide);
+  frameHistory.forEach(freeLayout);
+  frameHistory = [];
+  historyPos = -1;
 }
 document.getElementById('frame').addEventListener('click', stopFrame);
 
@@ -1207,8 +1241,13 @@ window.addEventListener('keydown', (e) => {
   enterFullscreen();
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && undoState && !typing(e.target)) { e.preventDefault(); doUndo(); return; }
   if (e.ctrlKey || e.altKey || e.metaKey) return;
-  // Any key stops the slideshow or wakes the night screen (and does nothing else).
-  if (!document.getElementById('frame').hidden) { e.preventDefault(); stopFrame(); return; }
+  // ← and → step through the slideshow; any other key stops it. Any key wakes the night screen (and does nothing else).
+  if (!document.getElementById('frame').hidden) {
+    e.preventDefault();
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') stepFrame(e.key === 'ArrowRight' ? 1 : -1);
+    else stopFrame();
+    return;
+  }
   if (currentView === 'home' && document.getElementById('view-home').dataset.mode === 'night') { e.preventDefault(); wokeAt = Date.now(); renderHome(); return; }
   if (document.querySelector('dialog[open]')) return; // Esc closes it natively
   if (typing(e.target)) {

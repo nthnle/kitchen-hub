@@ -14,7 +14,7 @@ A family calendar, chore chart, grocery list, notes board and photo frame for a 
 - **Notes.** Post a note from your phone, or with *+ Add a note* on the kitchen screen ("Dentist forms are on the counter"); it shows on the kitchen screen for a day, three days or a week.
 - **Countdowns.** "Thanksgiving in 3 days", birthdays that repeat every year. Big holidays (Thanksgiving, Christmas, Halloween…) count down automatically from your holiday calendar.
 - **Weather.** Current conditions, a 7-day forecast, rain timing, air quality, UV, sunrise and sunset — and National Weather Service alerts (US) as a banner that stays on screen.
-- **Photo frame.** Upload photos and videos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side. Videos play full screen from start to finish, muted unless you turn sound on. The PC makes a light 1080p, 30 fps copy of each video for the slideshow (phones often record at 60 or 120 fps, which older PCs can't play smoothly), so a new video joins the slideshow a minute or so after it's uploaded.
+- **Photo frame.** Upload photos and videos from your phone; when nobody's using the screen it shows them as a slideshow, pairing portrait photos side by side, each with the date it was taken (when the photo has one). Use ← and → to go back and forward. Videos play full screen from start to finish, muted unless you turn sound on. The PC makes a light 1080p, 30 fps copy of each video for the slideshow (phones often record at 60 or 120 fps, which older PCs can't play smoothly), so a new video joins the slideshow a minute or so after it's uploaded.
 - **On your phone, anywhere.** The phone page has the same Today, Calendar, Chores and Groceries as the kitchen screen, with the editors under *More*. It keeps the last copy on the phone, so the grocery list still works in a store with no signal and syncs what you check off once you’re back online.
 - **Watch.** Big buttons that open Netflix, YouTube, Disney+ and others in Edge.
 - **Easy on the eyes.** Warm, dark colors from sunset to sunrise.
@@ -158,7 +158,8 @@ From sunset to sunrise every tab uses warm, dark colors. When the screen is left
 | Any letter (on Groceries) | Start typing a new item |
 | `N` | Post a new note (on Chores: start a new chore) |
 | `Ctrl+Z` | Undo the last check-off or removed note |
-| Any key | Stop the slideshow, or wake the night screen |
+| `←` `→` | Back and forward through the slideshow |
+| Any other key | Stop the slideshow, or wake the night screen |
 
 The pointer hides itself when the touchpad isn't in use.
 
