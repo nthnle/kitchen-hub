@@ -1088,7 +1088,7 @@ function buildSlide(layout) {
   if (layout.kind === 'video') {
     const v = el('video', { src: layout.photos[0].src, preload: 'auto', playsinline: '', class: 'vid' });
     v.muted = !S.videoSound; // sound is off unless "videoSound": true in config.json
-    return el('div', { class: 'slide video' }, el('div', { class: 'cell' }, v));
+    return el('div', { class: 'slide video' }, el('div', { class: 'cell' }, v, photoDateTag(layout.photos[0].name)));
   }
   return el('div', { class: `slide ${layout.kind}` }, layout.photos.map((p) => {
     // A photo on its own that doesn't match the screen's shape is shown whole,
